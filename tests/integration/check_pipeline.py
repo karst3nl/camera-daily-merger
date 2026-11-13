@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--image", required=True)
+    parser.add_argument("--compact", action="store_true")
     args = parser.parse_args()
     name = "merger-pipeline-" + uuid.uuid4().hex[:12]
 
@@ -34,7 +35,11 @@ def main():
         source_dir = media / "input"
         source_dir.mkdir(parents=True)
         day = (datetime.now(ZoneInfo("Europe/Berlin")) - timedelta(days=2)).date()
-        source = source_dir / f"{day}T10:00:00+01:00.mp4"
+        source = source_dir / (
+            f"synthetic_00_{day:%Y%m%d}100000.mp4"
+            if args.compact
+            else f"{day}T10:00:00+01:00.mp4"
+        )
         subprocess.run(
             [
                 "ffmpeg",
@@ -58,7 +63,10 @@ def main():
                 {
                     "source_root": "/media",
                     "cameras": [{"id": "synthetic", "path": "input"}],
-                    "timestamp_pattern": r"(?P<start>.+)\.mp4",
+                    "timestamp_pattern": r"synthetic_00_(?P<start>\d{14})\.mp4"
+                    if args.compact
+                    else r"(?P<start>.+)\.mp4",
+                    "timestamp_format": "%Y%m%d%H%M%S" if args.compact else "iso8601",
                     "minimum_age_seconds": 0,
                 }
             )

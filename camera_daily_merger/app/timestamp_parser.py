@@ -11,15 +11,22 @@ class TimestampParser(Protocol):
 
 
 class RegexTimestampParser:
-    def __init__(self, pattern: str, timezone: str):
+    def __init__(self, pattern: str, timezone: str, timestamp_format: str = "iso8601"):
         self.pattern = re.compile(pattern)
         self.zone = ZoneInfo(timezone)
+        self.timestamp_format = timestamp_format
 
     def parse(self, name: str) -> datetime:
         match = self.pattern.fullmatch(name)
         if not match:
             raise ValueError("Filename does not match configured timestamp adapter")
-        start = datetime.fromisoformat(match.group("start"))
+        value = match.group("start")
+        if self.timestamp_format == "iso8601":
+            if "T" not in value and " " not in value:
+                raise ValueError("Recording timestamp requires a time component")
+            start = datetime.fromisoformat(value)
+        else:
+            start = datetime.strptime(value, self.timestamp_format)
         if start.tzinfo is not None:
             return start.astimezone(self.zone)
         # Round-trip both folds. A gap has no valid instant; a repeated hour has two.

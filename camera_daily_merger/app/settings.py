@@ -20,6 +20,7 @@ class Settings:
     root: Path
     cameras: dict[str, str]
     timestamp_pattern: str
+    timestamp_format: str = "iso8601"
     timezone: str = "Europe/Berlin"
     output: str = "daily"
     staging: str = ".staging"
@@ -29,6 +30,11 @@ class Settings:
     def __post_init__(self):
         if not self.root.is_absolute():
             raise ValueError("Storage root must be absolute")
+        if (
+            not isinstance(self.timestamp_format, str)
+            or not 1 <= len(self.timestamp_format) <= 128
+        ):
+            raise ValueError("Explicit timestamp format required")
         ZoneInfo(self.timezone)
         pattern = re.compile(self.timestamp_pattern)
         if "start" not in pattern.groupindex:
@@ -79,6 +85,7 @@ def from_addon_options(options: dict) -> Settings | None:
             root=Path(options["source_root"]),
             cameras=cameras,
             timestamp_pattern=options["timestamp_pattern"],
+            timestamp_format=options.get("timestamp_format", "iso8601"),
             timezone=options.get("timezone", "Europe/Berlin"),
             output=options.get("output", "daily"),
             staging=options.get("staging", ".staging"),

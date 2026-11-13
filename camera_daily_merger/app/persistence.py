@@ -193,3 +193,10 @@ class Store:
                 "SELECT value FROM metadata WHERE key=?", (key,)
             ).fetchone()
             return json.loads(row[0]) if row else None
+
+    def cache_output(self, row, metadata):
+        with self.transaction() as db:
+            db.execute(
+                "UPDATE jobs SET output=? WHERE camera=? AND day=? AND output=?",
+                (json.dumps(metadata), row["camera"], row["day"], row["output"]),
+            )

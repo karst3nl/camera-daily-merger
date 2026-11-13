@@ -50,7 +50,9 @@ class Scheduler:
         grouped = {(name, day): [] for name in cameras for day in days}
         blocked = set()
         parser = RegexTimestampParser(
-            self.settings.timestamp_pattern, self.settings.timezone
+            self.settings.timestamp_pattern,
+            self.settings.timezone,
+            self.settings.timestamp_format,
         )
         for item in scan(self.settings, now=now.timestamp()):
             if item.camera not in cameras:
@@ -109,11 +111,14 @@ class Scheduler:
         ):
             return {"queued": 0, "diagnostics": []}
         days = {due - timedelta(days=n) for n in range(self.schedule.backfill_days)}
-        # Previously requested historical jobs are revisited within the bounded listing.
+        # Due failed historical jobs are retried; healthy older days require manual backfill.
         days.update(
             date.fromisoformat(row["day"])
             for row in rows
             if row["day"] <= due.isoformat()
+            and row["status"] == "failed"
+            and row["attempts"] < 5
+            and row["next_retry"] <= now.timestamp()
         )
         # Bound one reconciliation pass. Older ranges remain available via manual backfill.
         days = set(sorted(days, reverse=True)[:366])

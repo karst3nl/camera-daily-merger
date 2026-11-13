@@ -184,3 +184,51 @@ def test_addon_options_require_explicit_sources(tmp_path):
     options["cameras"].append({"id": "a", "path": "other"})
     with pytest.raises(ValueError, match="Duplicate"):
         from_addon_options(options)
+
+
+def test_compact_timestamp_in_nested_calendar_layout(tmp_path):
+    # Anonymized synthetic equivalent of an owner-provided filename shape.
+    path = recording(
+        tmp_path, "camera_a_00_20260101120000.mp4", folder="camera_a/2026/01/01"
+    )
+    config = Settings(
+        root=tmp_path,
+        cameras={"camera_a": "camera_a"},
+        timestamp_pattern=r"camera_a_00_(?P<start>\d{14})\.mp4",
+        timestamp_format="%Y%m%d%H%M%S",
+    )
+    results = list(scan(config))
+    assert len(results) == 1 and isinstance(results[0], Clip)
+    assert results[0].path == str(path.relative_to(tmp_path))
+    assert results[0].start.isoformat() == "2026-01-01T12:00:00+01:00"
+    assert results[0].start.date().isoformat() == "2026-01-01"
+
+
+@pytest.mark.parametrize(
+    "value", ["20260329023000", "20261025023000", "20260132120000", "not-a-date"]
+)
+def test_compact_timestamp_gap_fold_and_malformed(value):
+    parser = RegexTimestampParser(
+        r"camera_a_00_(?P<start>.+)\.mp4", "Europe/Berlin", "%Y%m%d%H%M%S"
+    )
+    with pytest.raises(ValueError):
+        parser.parse(f"camera_a_00_{value}.mp4")
+
+
+def test_date_only_iso_timestamp_rejected():
+    parser = RegexTimestampParser(PATTERN, "Europe/Berlin")
+    with pytest.raises(ValueError):
+        parser.parse("2026-01-01.mp4")
+
+
+def test_compact_adapter_maps_two_camera_folders(tmp_path):
+    recording(tmp_path, "camera_a_00_20260101120000.mp4", folder="camera_a/2026/01/01")
+    recording(tmp_path, "camera_b_00_20260101130000.mp4", folder="camera_b/2026/01/01")
+    config = Settings(
+        root=tmp_path,
+        cameras={"a": "camera_a", "b": "camera_b"},
+        timestamp_pattern=r".+_00_(?P<start>\d{14})\.mp4",
+        timestamp_format="%Y%m%d%H%M%S",
+    )
+    results = chronological([x for x in scan(config) if isinstance(x, Clip)])
+    assert [(x.camera, x.start.hour) for x in results] == [("a", 12), ("b", 13)]

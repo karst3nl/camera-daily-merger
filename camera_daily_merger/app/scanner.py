@@ -43,7 +43,7 @@ def scan(
 ) -> Iterator[Clip | Diagnostic]:
     now = time.time() if now is None else now
     parser = parser or RegexTimestampParser(
-        settings.timestamp_pattern, settings.timezone
+        settings.timestamp_pattern, settings.timezone, settings.timestamp_format
     )
     reserved = (PurePosixPath(settings.output), PurePosixPath(settings.staging))
 

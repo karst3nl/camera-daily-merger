@@ -21,6 +21,9 @@ class Output:
     duration: float
     size: int
     sha256: str
+    mtime_ns: int = 0
+    device: int = 0
+    inode: int = 0
 
 
 def merge(
@@ -161,11 +164,15 @@ def merge(
                 follow_symlinks=False,
             )
             os.fsync(destination)
+            published = os.fstat(output_fd)
             return Output(
                 f"{settings.output}/{camera}/{final}",
                 result.duration,
                 os.fstat(output_fd).st_size,
                 digest,
+                mtime_ns=published.st_mtime_ns,
+                device=published.st_dev,
+                inode=published.st_ino,
             )
         finally:
             os.close(output_fd)

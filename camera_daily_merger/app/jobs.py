@@ -30,7 +30,9 @@ def worker_lock(data: Path):
         os.close(descriptor)
 
 
-def output_healthy(settings: Settings, row: dict | None) -> bool:
+def output_healthy(
+    settings: Settings, row: dict | None, *, store: Store | None = None
+) -> bool:
     if not row or not row["output"]:
         return False
     try:
@@ -39,13 +41,25 @@ def output_healthy(settings: Settings, row: dict | None) -> bool:
             directory(settings.root) as root,
             open_relative(root, metadata["path"]) as descriptor,
         ):
-            if os.fstat(descriptor).st_size != metadata["size"]:
+            info = os.fstat(descriptor)
+            if info.st_size != metadata["size"]:
                 return False
+            snapshot = {
+                "mtime_ns": info.st_mtime_ns,
+                "device": info.st_dev,
+                "inode": info.st_ino,
+            }
+            if all(metadata.get(key) == value for key, value in snapshot.items()):
+                return True
             with os.fdopen(os.dup(descriptor), "rb") as source:
-                return (
+                valid = (
                     hashlib.file_digest(source, "sha256").hexdigest()
                     == metadata["sha256"]
                 )
+            if valid and store is not None:
+                store.cache_output(row, metadata | snapshot)
+            return valid
+
     except (OSError, ValueError, KeyError):
         return False
 
@@ -71,7 +85,7 @@ def enqueue(
         clips,
         time.time() if now is None else now,
         force=force,
-        healthy=output_healthy(settings, row),
+        healthy=output_healthy(settings, row, store=store),
     )
 
 

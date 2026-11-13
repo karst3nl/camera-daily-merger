@@ -110,3 +110,37 @@ def test_v1_migration_preserves_queued_work(tmp_path):
     assert migrated.metadata("cursor") is None
     migrated.metadata("cursor", {"day": str(DAY)})
     assert Store(path).metadata("cursor") == {"day": str(DAY)}
+
+
+def test_output_integrity_cache_bounds_unchanged_nas_reads(tmp_path, monkeypatch):
+    from camera_daily_merger.app import jobs
+
+    make_clip(tmp_path, 10)
+    data = tmp_path / "data"
+    data.mkdir()
+    store = Store(data / "jobs.sqlite")
+    settings = config(tmp_path)
+    enqueue(store, settings, "a", DAY, clips(tmp_path))
+    with worker_lock(data):
+        run_one(store, settings, data, threading.Event())
+    digest = jobs.hashlib.file_digest
+    calls = []
+
+    def counted(*args, **kwargs):
+        calls.append(1)
+        return digest(*args, **kwargs)
+
+    monkeypatch.setattr(jobs.hashlib, "file_digest", counted)
+    row = store.get("a", str(DAY))
+    assert output_healthy(settings, row, store=store)
+    assert not calls
+    path = tmp_path / json.loads(row["output"])["path"]
+    path.touch()
+    assert output_healthy(settings, row, store=store)
+    assert len(calls) == 1
+    assert output_healthy(settings, store.get("a", str(DAY)), store=store)
+    assert len(calls) == 1
+    content = bytearray(path.read_bytes())
+    content[0] ^= 1
+    path.write_bytes(content)
+    assert not output_healthy(settings, store.get("a", str(DAY)), store=store)

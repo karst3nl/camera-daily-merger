@@ -34,3 +34,15 @@
   persistent startup-check markers blocking crash recovery.
 - Alpha.2: source mappings, adapter and schedule settings are available in the
   Home Assistant Configuration tab; empty defaults safely disable processing.
+- Phase 7 preparation: real-device acceptance protocol, operations/backup/recovery,
+  security guidance and verified #alpha repository installation instructions.
+- Real Pi 4 / HA OS / Synology acceptance, benchmarks, source-adapter verification
+  and release/license review remain blocked; no release tag or main merge.
+- Added configurable compact timestamp formats after one owner-provided filename
+  shape; anonymized nested-calendar fixtures pass. Actual timezone/channel/codec
+  semantics remain unverified; date-only ISO timestamps are rejected.
+- Reduce NAS I/O with cached output identity/mtime/size and SHA256 checks after
+  metadata changes; bound normal reconciliation to the configured lookback plus
+  due failed historical jobs. Full metadata-preserving bit-rot audit is separate.
+- Alpha.3 includes the compact filename adapter candidate and output integrity
+  cache; real-device acceptance remains blocked.

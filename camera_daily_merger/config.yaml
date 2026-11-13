@@ -1,5 +1,5 @@
 name: Camera Daily Merger
-version: 0.1.0-alpha.2
+version: 0.1.0-alpha.3
 slug: camera_daily_merger
 description: Lossless daily camera exports (alpha; real NAS acceptance pending)
 url: https://github.com/karst3nl/camera-daily-merger
@@ -15,6 +15,7 @@ options:
   source_root: /media/reolink
   cameras: []
   timestamp_pattern: ''
+  timestamp_format: iso8601
   timezone: Europe/Berlin
   output: daily
   staging: .staging
@@ -27,6 +28,7 @@ schema:
     - id: str
       path: str
   timestamp_pattern: str
+  timestamp_format: str
   timezone: str
   output: str
   staging: str

@@ -4,14 +4,31 @@ This alpha implements synthetic-tested merging, scheduling and a web interface.
 Real Home Assistant/NAS operation remains unverified. The interface uses ingress;
 no host ports, privileged mode or Supervisor API access is enabled.
 
-Home Assistant's repository installer reads the default branch. Until release,
-use a local add-on checkout of **alpha**, rather than expecting the repository
-URL alone to install alpha. With supported access to the HA /addons directory,
-copy only camera_daily_merger from the alpha checkout into
-/addons/camera_daily_merger, then reload the app store, install the local app and
-start it. Never change main to make alpha discoverable. Local builds require
-network access to the Python base image registry. Only aarch64 is declared;
-armv7 is not supported by this bootstrap image.
+## Install from alpha
+
+In Home Assistant, open Settings > Apps (Add-ons on older versions) > app store,
+open the repositories menu and add:
+
+```text
+https://github.com/karst3nl/camera-daily-merger#alpha
+```
+
+Reload the store, select Camera Daily Merger and install the alpha build. Confirm
+version 0.1.0-alpha.3 or newer from alpha. The `#alpha` selector is important:
+without it the repository's default branch is used. Current Supervisor source
+explicitly parses this selector and passes it as Git's clone branch; the actual
+HA store installation flow still requires device acceptance. This corrects the
+earlier bootstrap instructions that only described a local-copy installation.
+
+If a local add-on installation is preferred, copy camera_daily_merger from an
+alpha checkout into /addons/camera_daily_merger, reload the store and install
+that local app. Never change main to make alpha discoverable. Builds need network
+access to the Python/Alpine registries and signed Alpine package repositories.
+Only aarch64 is declared; armv7 is not supported.
+
+Verified Supervisor source reference (repository selector and clone behavior):
+https://github.com/home-assistant/supervisor/blob/98a2322374ae3d0c248079d11f7435ad759935fa/supervisor/validate.py
+and the same revision's supervisor/store/git.py.
 
 Home Assistant provides persistent /data automatically. The supported media map
 exposes /media read-write for future dedicated output/staging directories. Mount
@@ -75,7 +92,8 @@ source options, so remove that override before relying on the Configuration tab.
 processing disabled; once configured, automatic scheduling is enabled. The worker
 runs one merge at a time. At 00:15 in the configured zone it considers the previous
 calendar day. Startup recovers interrupted jobs and up to seven completed days;
-reconciliation runs every six hours and also revisits due failed jobs. These are
+reconciliation checks that same rolling window every six hours and also revisits
+due failed historical jobs. Older healthy dates require manual backfill. These are
 bounded recovery defaults, not unlimited automatic historical backfill.
 
 Set reconcile_seconds/backfill_days in the Configuration tab. Optional advanced
@@ -148,3 +166,28 @@ backfill_days: 7
 The backfill CLI also accepts `--config /data/options.json` for normal add-on
 options, provided source settings are complete. Do not configure credentials here;
 network-storage credentials belong to Home Assistant's storage setup.
+
+## Compact timestamp adapter candidate
+
+An owner-provided example establishes this anonymized shape:
+`<storage>/<camera>/YYYY/MM/DD/<camera>_00_YYYYMMDDHHMMSS.mp4`.
+The scanner supports recursive calendar folders without assuming their exact root.
+For a sanitized synthetic camera the candidate settings are:
+
+```yaml
+cameras:
+  - id: camera_a
+    path: camera_a
+timestamp_pattern: '.+_00_(?P<start>\d{14})\.mp4'
+timestamp_format: '%Y%m%d%H%M%S'
+```
+
+The actual source_root must be the verified HA mount containing the camera
+folder. Camera IDs/prefixes are deployment-specific local settings, not source
+code. Confirm that the timestamp is recording start time in the configured zone
+before using this on real recordings. The owner confirmed `_00_` is a fixed
+camera-generated filename component with no application meaning. The adapter
+treats it literally and uses folder mappings for camera identity. The example
+alone does not prove timezone or stream compatibility.
+Offset-free repeated DST hours remain rejected. `timestamp_format: iso8601` keeps
+the original ISO adapter behavior; date-only values are rejected.

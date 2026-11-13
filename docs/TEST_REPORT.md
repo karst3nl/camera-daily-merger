@@ -286,3 +286,64 @@ remains an explicit source override. Alpha add-on version is 0.1.0-alpha.2.
 62 tests passed plus current add-on linter; the native container pipeline now
 uses options.json and passed automatic processing/restart/source-preservation.
 Added v1-to-v2 migration preservation coverage before the final complete run.
+
+## Phase 7 — Acceptance preparation and filename candidate (BLOCKED)
+
+Prepared ACCEPTANCE.md, OPERATIONS.md and SECURITY.md, plus app-store README,
+DOCS and changelog. Verified the current Supervisor repository URL regex and Git
+clone code at revision 98a2322374ae3d0c248079d11f7435ad759935fa: #alpha is an
+explicit supported branch selector. Updated setup accordingly; actual HA store
+installation remains NOT RUN.
+
+One owner-supplied filename/path shape was received. No actual camera name or
+identifying filename is tracked. Added configurable timestamp_format (iso8601
+or explicit strptime) with synthetic compact names under nested calendar folders.
+Candidate format is %Y%m%d%H%M%S; its real time semantics/timezone
+are still awaiting owner confirmation. The owner confirmed the `_00_` component
+has no application meaning; it is matched literally, without inferring a codec
+or camera identity from it. New tests cover the layout, malformed
+compact dates, DST gaps/repeated hours and date-only ISO rejection.
+No real recording was opened, modified or uploaded.
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+.venv/bin/python work/scan.py
+git diff --check
+```
+
+Results: 71 tests passed, 0 failed. Phase 7 real hardware, NAS, ingress,
+full-day/multi-camera acceptance, Pi benchmarks, source/codec verification and
+owner review remain NOT RUN / BLOCKED. Full release/license inventory is pending.
+No release tag or merge/push to main is performed. See ACCEPTANCE.md for evidence
+fields and known capacity/storage limits. Next action depends on sanitized codec
+metadata, timestamp/mount confirmation and owner-run HA OS/Pi/NAS acceptance.
+
+Phase 7 resource review: unchanged output snapshots now avoid full-video hashing.
+Metadata changes trigger SHA256; verified snapshots are conditionally cached. A
+regression test proves zero hash reads for unchanged output, one read after a
+metadata-only change, subsequent cache reuse, and detection of same-size modified
+content when mtime changes. Automatic lookback is bounded by backfill_days; due
+failed historical jobs are revisited, older healthy dates remain manual. This
+does not detect silent corruption that preserves all metadata; a separate audit
+or explicit reprocess is needed for that case.
+
+Additional commands: both architecture builds with the session CA secret,
+`.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64 --compact`,
+and the ARM64-emulated container smoke test. The compact-name native scheduled
+merge/restart/source-hash scenario passed; both images/service checks passed.
+
+Final environment recovery: the development machine's 8 GiB filesystem filled
+because repeated Docker VFS builds retained copied intermediate filesystems. A
+native rerun passed after the first cache cleanup; the subsequent ARM build hit
+ENOSPC again. Removed only this task's regenerable linter/old ARM test images and
+all unused Docker build cache; free space increased to 5.8 GiB. Source/config/NAS
+content was untouched. The final ARM build/smoke and package checks were rerun
+successfully after cleanup. This development-host storage event is not a NAS
+fault-injection success and is not counted as a passing device test.

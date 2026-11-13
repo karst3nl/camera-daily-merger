@@ -78,13 +78,18 @@ DB commit can leave an unreferenced valid version; it is never presented as a
 success and is not automatically deleted. Older versions remain on NAS; no
 retention/deletion policy is implemented. This costs space during retries, which
 is preferable to risking original or previous-export loss. Legacy outputs are
-not automatically adopted. Reconciliation hashes the current output sequentially
-to detect missing/corrupt output, adding NAS read I/O but bounded memory.
+not automatically adopted. Reconciliation checks size/mtime/device/inode first and hashes sequentially only
+when that metadata changed or an older row lacks a verified snapshot. Successful
+hash verification refreshes the snapshot with an atomic conditional DB update.
+This avoids rereading unchanged videos on every cycle. Silent bit rot preserving
+all metadata requires a separate full integrity audit or explicit rebuild.
 
 Phase 5 adds a standard-library calendar scheduler. Persistent scheduling metadata
 and schema v2 survive restart; v1 databases migrate by adding metadata. The latest
 due date uses local calendar subtraction, including DST. A bounded historical
-window recovers missed runs; periodic reconciliation and failed-job due times
+window covers missed runs and normal reconciliation; due failed historical jobs
+are also revisited. Older healthy dates require manual backfill. Periodic cycles
+and failed-job due times
 trigger rescans. Repeated ticks/enqueues leave queued/running work intact. Invalid
 source diagnostics block the affected camera/date; unknown timestamps block all
 requested dates for that camera. Diagnostics are stored without source paths.
@@ -103,3 +108,10 @@ root; safe descriptor opens reject symlinks. The interface never returns manifes
 full NAS paths or credentials. Browser assets use relative URLs for ingress prefixes,
 external JS/CSS and a restrictive same-origin CSP. Local development requires an
 explicit loopback-only override. Actual ingress remains an acceptance gate.
+
+An owner-provided filename shape in Phase 7 justified adding explicit
+`timestamp_format` configuration. `iso8601` remains the default; Python strptime
+formats allow compact timestamps without hardcoding camera names or Reolink
+semantics. Tests use anonymized synthetic YYYY/MM/DD directories and compact
+names. Filename time remains authoritative for grouping, subject to confirming
+its meaning/timezone with the owner. Calendar folder names do not override it.
