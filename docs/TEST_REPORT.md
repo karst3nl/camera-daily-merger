@@ -270,3 +270,11 @@ Home Assistant communication documentation. Actual ingress authentication,
 Supervisor peer/iframe behavior and HA OS installation are NOT RUN / BLOCKED.
 This explicitly permitted Phase 6 limitation transfers to real acceptance;
 no production-ready claim. Next Phase 7 documentation and owner/device evidence.
+
+Phase 6 follow-up robustness review: discarded unused FFmpeg stderr instead of
+buffering it, limited ffprobe to 32 streams and selected metadata fields, and used
+an anonymous startup writeability check so an old bootstrap marker cannot prevent
+restart. Added large-stderr and stale-marker regressions. Command
+`.venv/bin/python -m pytest`: **61 passed, 0 failed**. Ruff checks and the rebuilt
+native container pipeline passed. GitHub CI for Phase 6 commit 6ef2ca1 was observed
+completed/success (run 43515122368). These checks do not change hardware limitations.

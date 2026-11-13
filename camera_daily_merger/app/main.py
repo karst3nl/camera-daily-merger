@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import signal
 import threading
+import tempfile
 import time
 
 from .backfill import load_settings
@@ -20,11 +21,9 @@ from .web import serve
 def validate_storage(data: Path, media: Path) -> None:
     if not data.is_dir() or not media.is_dir():
         raise ValueError("Required data/media mount is unavailable")
-    # Only the dedicated application state mount may be written in this phase.
-    marker = data / "bootstrap-check"
-    with marker.open("x"):
+    # Anonymous state-only writeability check cannot leave a blocking startup marker.
+    with tempfile.TemporaryFile(dir=data):
         pass
-    marker.unlink()
 
 
 def healthy(data: Path) -> bool:

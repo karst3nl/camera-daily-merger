@@ -20,7 +20,10 @@ def execute(
     timeout=30,
 ) -> bytes:
     with subprocess.Popen(
-        arguments, pass_fds=descriptors, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        arguments,
+        pass_fds=descriptors,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
     ) as process:
         deadline = time.monotonic() + timeout
         while True:
@@ -77,8 +80,10 @@ def probe(descriptor: int, *, cancel=None) -> Probe:
             "ffprobe",
             "-v",
             "error",
-            "-show_streams",
-            "-show_format",
+            "-max_streams",
+            "32",
+            "-show_entries",
+            "format=format_name,duration:stream=" + ",".join(FIELDS),
             "-show_data_hash",
             "sha256",
             "-of",

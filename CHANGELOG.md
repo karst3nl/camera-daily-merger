@@ -30,3 +30,5 @@
 - Bounded HTTP workers, safe output lookup, byte-range streaming and no public
   port mapping; desktop/mobile Chromium flow verified with synthetic H.264.
 - Include MIT and third-party notices in the add-on build context/image.
+- Robustness: discard unused media stderr, bound probe stream metadata, and avoid
+  persistent startup-check markers blocking crash recovery.

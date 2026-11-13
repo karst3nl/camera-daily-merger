@@ -235,3 +235,19 @@ def test_running_process_cancellation():
             )
     finally:
         timer.cancel()
+
+
+def test_large_diagnostics_do_not_deadlock_process():
+    import sys
+    from camera_daily_merger.app.probe import execute
+
+    assert (
+        execute(
+            [
+                sys.executable,
+                "-c",
+                "import os; os.write(2, b'x'*4000000); print('done')",
+            ]
+        )
+        == b"done\n"
+    )
