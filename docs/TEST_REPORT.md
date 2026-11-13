@@ -197,3 +197,35 @@ versions avoid destructive replacement, but crashes can leave unreferenced
 versions/partials; they are retained. SHA256 output integrity checks add bounded
 sequential NAS I/O. No automatic cleanup/deletion. Actual HA OS/NAS NOT RUN.
 Next: Phase 5 scheduler, missed-run recovery, reconciliation and manual backfill.
+
+## Phase 5 — Scheduling and backfill (2026-11-13)
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m build
+.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64
+docker --host=unix:///var/run/docker.sock build --platform linux/arm64 --secret id=proxy_ca,src=/etc/ssl/certs/ca-certificates.crt -t camera-daily-merger:alpha-arm64 camera_daily_merger
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:alpha-arm64 --qemu work/qemu-aarch64-static
+```
+
+Results: 54 tests passed, 0 failed. Fake-clock cases cover 00:15 boundaries around
+both DST transitions, restart after a missed time, repeated scheduling cycles,
+retry due time, delayed clips, healthy-output no-op, manual range validation and
+current-day growing files not blocking yesterday. A native container with mock
+NAS input automatically merged a historical synthetic day, recorded current output,
+passed health, restarted without rebuilding, stopped gracefully and preserved
+source SHA256. Initial harness could not inspect container-owned output directories
+under rootless UID mapping; fixed test-only directory permissions before host
+inspection/cleanup (production permissions unchanged). ARM64 build/service smoke
+also passed. Early fake-clock tests used host-current fixture mtimes; fixed the
+fixtures to deterministic old mtimes and retested.
+
+Reconciliation defaults: six hours, seven-day initial backfill; maximum 366 dates
+and latest 1,000 job summaries per pass. Older history requires explicit manual
+backfill. Concurrency is one. Actual HA OS/NAS scheduling/reboot remains NOT RUN.
+Next: Phase 6 ingress-only UI, validated manual actions and protected playback.

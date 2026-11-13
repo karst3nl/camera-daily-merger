@@ -62,3 +62,36 @@ Use explicit offsets for repeated DST hours; naive ambiguous/gap times fail.
 Camera mappings must not overlap. Symlinks/hardlinks are rejected. File age and
 snapshot checks reduce incomplete input risk; actual writer behavior requires
 real NAS testing. Store this configuration only locally under /data.
+
+## Automatic processing and backfill
+
+After installing alpha, create `/data/discovery.json` using the explicit source
+adapter configuration above and restart. Without that file the service reports
+processing disabled; once configured, automatic scheduling is enabled. The worker
+runs one merge at a time. At 00:15 in the configured zone it considers the previous
+calendar day. Startup recovers interrupted jobs and up to seven completed days;
+reconciliation runs every six hours and also revisits due failed jobs. These are
+bounded recovery defaults, not unlimited automatic historical backfill.
+
+Optional `/data/schedule.json`:
+
+```json
+{"reconcile_seconds": 21600, "backfill_days": 7}
+```
+
+Intervals must be 60..604800 seconds, backfill 1..366 days. Restart after changes.
+Manual administrative enqueue (1..366 dates per call):
+
+```sh
+python -m app.backfill --config /data/discovery.json --data /data \
+  --camera camera_a --start 2026-11-01 --end 2026-11-12
+```
+
+Use `camera_daily_merger.app.backfill` in a checkout. `--force` resets an exhausted
+retry budget/reprocesses unchanged inputs. Pending/running jobs are never duplicated.
+Only dates whose daily scheduled time has passed are accepted. The running service
+processes enqueued work. Source diagnostics block affected days; fix mappings or
+incomplete clips before retrying. The latest 1,000 job summaries and up to 366 dates
+are included per automatic reconciliation; older history is available via manual
+backfill. Earlier output versions remain on NAS. This storage cost has no automatic
+retention policy. No original recordings are ever removed.

@@ -92,7 +92,7 @@ def test_worker_lock_and_migration(tmp_path):
     Store(path)
     Store(path)
     with sqlite3.connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 1
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 2
         db.execute("PRAGMA user_version=999")
     with pytest.raises(ValueError, match="schema"):
         Store(path)

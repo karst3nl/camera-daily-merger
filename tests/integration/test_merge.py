@@ -47,6 +47,7 @@ def make_clip(root, hour, color="red", size="64x64", audio=False):
         ],
         check=True,
     )
+    os.utime(path, (1, 1))
     return path
 
 

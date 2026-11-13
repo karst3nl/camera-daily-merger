@@ -22,3 +22,6 @@
 - Phase 4: durable SQLite manifests/state/history, atomic job claims, lifetime
   worker locking, interrupted-run recovery, five-attempt retry cap and immutable
   managed output versions preserving previous successful exports.
+- Phase 5: 00:15 local calendar scheduling, bounded restart backfill, periodic
+  reconciliation, manual historical enqueue, persistent scheduling metadata,
+  scanner diagnostics blocking partial days and independent service heartbeat.

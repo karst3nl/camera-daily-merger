@@ -79,6 +79,7 @@ def run_one(
     store: Store, settings: Settings, data: Path, cancel: threading.Event, *, now=None
 ):
     """Must be called under worker_lock; DB claim also prevents duplicate job claims."""
+    fixed_now = now
     now = time.time() if now is None else now
     job = store.claim(now)
     if not job:
@@ -92,9 +93,17 @@ def run_one(
             cancel=cancel,
             output_token=job["token"],
         )
-        store.finish(job, time.time(), output=asdict(result))
+        store.finish(
+            job, time.time() if fixed_now is None else now, output=asdict(result)
+        )
     except MediaError as error:
-        store.finish(job, time.time(), error=str(error)[:200])
+        store.finish(
+            job, time.time() if fixed_now is None else now, error=str(error)[:200]
+        )
     except (OSError, ValueError):
-        store.finish(job, time.time(), error="storage_or_validation_failure")
+        store.finish(
+            job,
+            time.time() if fixed_now is None else now,
+            error="storage_or_validation_failure",
+        )
     return True

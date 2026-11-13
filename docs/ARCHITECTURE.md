@@ -80,3 +80,13 @@ retention/deletion policy is implemented. This costs space during retries, which
 is preferable to risking original or previous-export loss. Legacy outputs are
 not automatically adopted. Reconciliation hashes the current output sequentially
 to detect missing/corrupt output, adding NAS read I/O but bounded memory.
+
+Phase 5 adds a standard-library calendar scheduler. Persistent scheduling metadata
+and schema v2 survive restart; v1 databases migrate by adding metadata. The latest
+due date uses local calendar subtraction, including DST. A bounded historical
+window recovers missed runs; periodic reconciliation and failed-job due times
+trigger rescans. Repeated ticks/enqueues leave queued/running work intact. Invalid
+source diagnostics block the affected camera/date; unknown timestamps block all
+requested dates for that camera. Diagnostics are stored without source paths.
+An independent heartbeat thread avoids false unhealthy status during long merges.
+Concurrency remains fixed at one; increasing it is intentionally not exposed yet.

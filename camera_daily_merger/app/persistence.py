@@ -34,7 +34,7 @@ class Store:
         self.path = path
         with self.transaction() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 1, 2):
                 raise ValueError("Unsupported database schema version")
             db.execute("""CREATE TABLE IF NOT EXISTS jobs (
                 camera TEXT NOT NULL, day TEXT NOT NULL, manifest TEXT NOT NULL,
@@ -45,7 +45,10 @@ class Store:
             db.execute("""CREATE TABLE IF NOT EXISTS history (
                 id INTEGER PRIMARY KEY, camera TEXT, day TEXT, token TEXT,
                 status TEXT, timestamp REAL, error TEXT)""")
-            db.execute("PRAGMA user_version=1")
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+            )
+            db.execute("PRAGMA user_version=2")
 
     @contextmanager
     def transaction(self):
@@ -74,7 +77,9 @@ class Store:
         with self.transaction() as db:
             return [
                 dict(row)
-                for row in db.execute("SELECT * FROM jobs ORDER BY day DESC,camera")
+                for row in db.execute(
+                    "SELECT camera,day,status,attempts,next_retry,error,output,output_fingerprint,fingerprint FROM jobs ORDER BY day DESC,camera LIMIT 1000"
+                )
             ]
 
     def enqueue(self, camera, day, clips, now, *, force=False, healthy=False):
@@ -175,3 +180,16 @@ class Store:
                     (row["camera"], row["day"], row["token"], now),
                 )
             return len(rows)
+
+    def metadata(self, key, value=None):
+        with self.transaction() as db:
+            if value is not None:
+                db.execute(
+                    "INSERT INTO metadata(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (key, json.dumps(value)),
+                )
+                return value
+            row = db.execute(
+                "SELECT value FROM metadata WHERE key=?", (key,)
+            ).fetchone()
+            return json.loads(row[0]) if row else None

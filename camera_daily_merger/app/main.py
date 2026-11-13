@@ -1,12 +1,19 @@
-"""Log-only bootstrap service. Does not scan or modify media."""
+"""Single-worker service with calendar scheduling and independent heartbeat."""
 
 import argparse
+from datetime import UTC, datetime
 import logging
+import json
 import os
 from pathlib import Path
 import signal
 import threading
 import time
+
+from .backfill import load_settings
+from .jobs import run_one, worker_lock
+from .persistence import Store
+from .scheduler import Schedule, Scheduler
 
 
 def validate_storage(data: Path, media: Path) -> None:
@@ -29,13 +36,73 @@ def healthy(data: Path) -> bool:
 
 def run(data: Path, media: Path, stop: threading.Event) -> None:
     validate_storage(data, media)
-    logging.info("Bootstrap ready; media processing is not implemented")
     heartbeat = data / "heartbeat"
-    try:
+
+    def beat():
         while not stop.is_set():
-            heartbeat.touch()
+            descriptor = os.open(
+                heartbeat, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600
+            )
+            try:
+                os.utime(descriptor)
+            finally:
+                os.close(descriptor)
             stop.wait(20)
+
+    thread = threading.Thread(target=beat, daemon=True)
+    thread.start()
+    try:
+        config = Path(os.environ.get("MERGER_CONFIG", str(data / "discovery.json")))
+        if not config.exists():
+            logging.info(
+                "No source configuration; processing disabled until configured and restarted"
+            )
+            stop.wait()
+            return
+        settings = load_settings(config)
+        if not settings.root.is_relative_to(media):
+            raise ValueError("Configured source root must be within media mount")
+        schedule_path = data / "schedule.json"
+        schedule_values = (
+            json.loads(schedule_path.read_text()) if schedule_path.exists() else {}
+        )
+        schedule = Schedule(
+            reconcile_seconds=int(
+                os.environ.get(
+                    "MERGER_RECONCILE_SECONDS",
+                    schedule_values.get("reconcile_seconds", 21600),
+                )
+            ),
+            backfill_days=int(
+                os.environ.get(
+                    "MERGER_BACKFILL_DAYS", schedule_values.get("backfill_days", 7)
+                )
+            ),
+        )
+        with worker_lock(data):
+            store = Store(data / "jobs.sqlite")
+            store.recover(time.time())
+            scheduler = Scheduler(store, settings, schedule)
+            logging.info("Worker ready; automatic scheduling enabled, concurrency=1")
+            next_scan = 0
+            while not stop.is_set():
+                now = datetime.now(UTC)
+                if now.timestamp() >= next_scan:
+                    try:
+                        report = scheduler.tick(now)
+                        if report["diagnostics"]:
+                            logging.warning(
+                                "Discovery blocked %d camera/date diagnostics",
+                                len(report["diagnostics"]),
+                            )
+                    except OSError:
+                        logging.error("Storage scan unavailable; retrying next minute")
+                    next_scan = (int(now.timestamp()) // 60 + 1) * 60
+                if not run_one(store, settings, data, stop):
+                    stop.wait(min(20, max(0.1, next_scan - time.time())))
     finally:
+        stop.set()
+        thread.join(timeout=21)
         heartbeat.unlink(missing_ok=True)
         logging.info("Shutdown complete")
 
