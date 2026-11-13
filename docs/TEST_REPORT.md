@@ -422,3 +422,42 @@ passed: automatic merge, current output, restart idempotency, graceful shutdown
 and unchanged synthetic source hash. Commands: native Docker build with the
 session CA secret, then `.venv/bin/python tests/integration/check_pipeline.py
 --image camera-daily-merger:test-amd64 --compact`.
+
+## Phase 7 owner feedback — archival DST errors blocking unrelated days (alpha.6)
+
+The improved diagnostics revealed archived fall-back-hour recordings blocking a
+November request. Root cause: the parser rejected the ambiguous absolute instant,
+and the scheduler treated that as an unknown recording date, blocking all requested
+camera dates. The calendar date had already been parsed and did not require an
+assumed offset. No identifying owner filename is tracked here.
+
+Preserve that known date on controlled TimestampError and Diagnostic objects,
+and scope scheduler blocking to its intersection with requested days. Fallback
+parsing of unsettled-file diagnostics uses the same date-aware error handling.
+The transition day remains blocked; unknown-date filenames still fail closed.
+No timestamps, source files or original metadata are changed.
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+.venv/bin/python work/scan.py
+git diff --check
+```
+
+Results: 83 tests passed, 0 failed. Regressions cover both spring gaps and fall
+repeated hours with a valid unrelated date in the same camera tree, targeted and
+multi-date requests, and unsettled archival DST clips. They prove the valid day
+queues while the affected DST day still cannot queue. Real-device reprocessing
+after upgrading remains NOT RUN / BLOCKED.
+
+Native image build and `.venv/bin/python tests/integration/check_pipeline.py
+--image camera-daily-merger:test-amd64 --compact --archived-dst` passed. The
+container automatically merged its valid recent synthetic day despite an archived
+ambiguous-hour clip, preserved both source hashes, restarted without rebuilding,
+and shut down cleanly. The archived-DST variant is included in hosted CI.

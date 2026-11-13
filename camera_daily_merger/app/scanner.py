@@ -1,7 +1,7 @@
 """Read-only snapshots and diagnostic dry-run discovery."""
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 import os
 import errno
 from pathlib import PurePosixPath
@@ -31,6 +31,7 @@ class Diagnostic:
     path: str
     reason: str
     detail: str | None = None
+    recording_date: date | None = None
 
 
 def signature(info: os.stat_result) -> tuple[int, int, int, int]:
@@ -91,6 +92,7 @@ def scan(
                                             relative,
                                             "invalid_timestamp",
                                             error.code,
+                                            error.recording_date,
                                         )
                                         continue
                                     except ValueError:

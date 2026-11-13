@@ -1,6 +1,6 @@
 """ISO timestamps from an explicitly configured filename regex."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 import re
 from typing import Protocol
 from zoneinfo import ZoneInfo
@@ -9,9 +9,10 @@ from zoneinfo import ZoneInfo
 class TimestampError(ValueError):
     """Controlled diagnostic code without recording metadata."""
 
-    def __init__(self, code: str):
+    def __init__(self, code: str, *, recording_date: date | None = None):
         super().__init__(code)
         self.code = code
+        self.recording_date = recording_date
 
 
 class TimestampParser(Protocol):
@@ -51,5 +52,7 @@ class RegexTimestampParser:
             == start
         }
         if len(candidates) != 1:
-            raise TimestampError("ambiguous_or_nonexistent_local_time")
+            raise TimestampError(
+                "ambiguous_or_nonexistent_local_time", recording_date=start.date()
+            )
         return candidates.pop().astimezone(self.zone)

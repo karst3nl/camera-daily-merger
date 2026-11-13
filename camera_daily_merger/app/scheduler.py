@@ -9,7 +9,7 @@ from .jobs import enqueue
 from .persistence import Store
 from .scanner import Clip, scan
 from .settings import Settings
-from .timestamp_parser import RegexTimestampParser
+from .timestamp_parser import RegexTimestampParser, TimestampError
 
 
 @dataclass(frozen=True)
@@ -62,12 +62,22 @@ class Scheduler:
                 if key in grouped and len(grouped[key]) <= 256:
                     grouped[key].append(item)
             else:
-                try:
-                    affected = {
-                        parser.parse(PurePosixPath(item.path).name).date()
-                    } & days
-                except ValueError:
-                    affected = days
+                if item.recording_date is not None:
+                    affected = {item.recording_date} & days
+                else:
+                    try:
+                        affected = {
+                            parser.parse(PurePosixPath(item.path).name).date()
+                        } & days
+                    except TimestampError as error:
+                        # An ambiguous instant can still have an unambiguous local date.
+                        affected = (
+                            ({error.recording_date} & days)
+                            if error.recording_date is not None
+                            else days
+                        )
+                    except ValueError:
+                        affected = days
                 for day in affected:
                     key = item.camera, day, item.reason, item.detail or ""
                     entry = blocked.setdefault(key, {"count": 0, "examples": []})

@@ -17,6 +17,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--image", required=True)
     parser.add_argument("--compact", action="store_true")
+    parser.add_argument("--archived-dst", action="store_true")
     args = parser.parse_args()
     name = "merger-pipeline-" + uuid.uuid4().hex[:12]
 
@@ -58,6 +59,12 @@ def main():
             check=True,
         )
         digest = hashlib.sha256(source.read_bytes()).hexdigest()
+        archived = None
+        if args.archived_dst:
+            if not args.compact:
+                parser.error("--archived-dst requires --compact")
+            archived = source_dir / "synthetic_00_20261025020100.mp4"
+            archived.write_bytes(source.read_bytes())
         (data / "options.json").write_text(
             json.dumps(
                 {
@@ -116,6 +123,8 @@ def main():
                 ).fetchone()
             assert row == after
             assert hashlib.sha256(source.read_bytes()).hexdigest() == digest
+            if archived is not None:
+                assert hashlib.sha256(archived.read_bytes()).hexdigest() == digest
             assert (
                 docker("inspect", "-f", "{{.State.ExitCode}}", name).stdout.strip()
                 == "0"

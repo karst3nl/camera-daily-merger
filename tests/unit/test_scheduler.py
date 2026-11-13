@@ -187,3 +187,59 @@ def test_diagnostic_examples_are_bounded_and_keep_blocking_unknown_files(tmp_pat
     assert len(result["diagnostics"]) == 1
     assert result["diagnostics"][0]["count"] == 10
     assert len(result["diagnostics"][0]["examples"]) == 3
+
+
+@pytest.mark.parametrize(
+    "problem_day,stamp",
+    [
+        (date(2026, 10, 25), "20261025020100"),
+        (date(2026, 3, 29), "20260329023000"),
+    ],
+)
+def test_dst_error_blocks_only_its_known_calendar_day(tmp_path, problem_day, stamp):
+    root = tmp_path / "input"
+    root.mkdir()
+    for name in (f"camera_a_00_{stamp}.mp4", "camera_a_00_20261112120000.mp4"):
+        path = root / name
+        path.write_bytes(b"synthetic")
+        os.utime(path, (1, 1))
+    settings = Settings(
+        root=tmp_path,
+        cameras={"a": "input"},
+        timestamp_pattern=r".+_00_(?P<start>\d{14})\.mp4",
+        timestamp_format="%Y%m%d%H%M%S",
+    )
+    store = Store(tmp_path / "jobs.sqlite")
+    scheduler = Scheduler(store, settings)
+    now = datetime(2026, 11, 14, 12, tzinfo=UTC)
+    result = scheduler.reconcile({DAY, problem_day}, now)
+    assert result["queued"] == 1
+    assert {item["day"] for item in result["diagnostics"]} == {problem_day.isoformat()}
+    assert result["diagnostics"][0]["detail"] == "ambiguous_or_nonexistent_local_time"
+    assert store.get("a", DAY.isoformat())["status"] == "queued"
+    assert store.get("a", problem_day.isoformat()) is None
+    assert scheduler.reconcile({DAY}, now)["diagnostics"] == []
+    assert scheduler.reconcile({problem_day}, now)["queued"] == 0
+
+
+def test_unsettled_dst_clip_is_also_scoped_to_its_calendar_day(tmp_path):
+    root = tmp_path / "input"
+    root.mkdir()
+    now = datetime(2026, 11, 14, 12, tzinfo=UTC)
+    old = root / "camera_a_00_20261025020100.mp4"
+    old.write_bytes(b"synthetic")
+    os.utime(old, (now.timestamp(), now.timestamp()))
+    valid = root / "camera_a_00_20261112120000.mp4"
+    valid.write_bytes(b"synthetic")
+    os.utime(valid, (1, 1))
+    settings = Settings(
+        root=tmp_path,
+        cameras={"a": "input"},
+        timestamp_pattern=r".+_00_(?P<start>\d{14})\.mp4",
+        timestamp_format="%Y%m%d%H%M%S",
+    )
+    store = Store(tmp_path / "jobs.sqlite")
+    result = Scheduler(store, settings).reconcile({DAY, date(2026, 10, 25)}, now)
+    assert result["queued"] == 1
+    assert {item["day"] for item in result["diagnostics"]} == {"2026-10-25"}
+    assert result["diagnostics"][0]["reason"] == "empty_or_unsettled"

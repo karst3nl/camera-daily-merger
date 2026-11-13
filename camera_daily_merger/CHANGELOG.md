@@ -55,3 +55,6 @@
   and DST errors and show up to three offending basenames in the authenticated UI.
 - Reprocess results show the actual first diagnostic instead of only a generic
   blocked message; the UI displays its backend version for upgrade verification.
+- Alpha.6: retain the known local recording date when rejecting an ambiguous or
+  nonexistent DST time, so archival transition-day clips cannot block unrelated
+  dates. The affected DST day still fails closed without guessing an offset.

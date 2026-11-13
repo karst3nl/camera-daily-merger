@@ -29,3 +29,4 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: python tests/integration/check_pipeline.py --image merger:test
       - run: python tests/integration/check_pipeline.py --image merger:test --compact
+      - run: python tests/integration/check_pipeline.py --image merger:test --compact --archived-dst

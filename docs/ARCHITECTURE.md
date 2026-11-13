@@ -123,3 +123,10 @@ never raw source directories or log output. UI rendering uses textContent and
 wraps long names; untrusted HTML-looking names remain text. Existing diagnostic
 records without these optional fields continue to render. Blocking semantics
 are unchanged; unknown recordings are not silently omitted to unblock a day.
+
+DST rejection carries the validated local recording date through parser and
+scanner diagnostics. The scheduler uses that date before reparsing a filename;
+it also preserves it when reparsing an unsettled-file diagnostic. A known date
+can scope failure even when the absolute instant is ambiguous or nonexistent.
+This changes neither DST disambiguation policy nor the fail-closed behavior for
+filenames whose calendar date cannot be established.

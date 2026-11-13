@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.5 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.6 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -226,3 +226,12 @@ Unknown timestamps still block requested dates; the app does not silently skip
 potential recordings. Recursive discovery can find a mismatching MP4 outside the
 selected calendar folder. Never delete or rename originals to bypass diagnostics.
 Do not publish private example names or the local database in bug reports.
+
+## DST errors belonging to another day
+
+Alpha.6 scopes ambiguous/nonexistent local times to their parsed local calendar
+date. For example, an offset-free 02:xx clip on the Berlin fall-back date cannot
+be ordered reliably, but its recording date is still known. It blocks that date,
+not every requested historical day. No offset is guessed and no original is
+changed. Truly unparseable filenames with unknown dates still block the requested
+camera dates. After upgrading, restart and reprocess to refresh old diagnostics.
