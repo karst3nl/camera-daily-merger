@@ -17,3 +17,9 @@ timestamps must fail explicitly. Never infer a Reolink naming convention.
 
 Only alpha receives commits/pushes. Main is reserved for explicit owner approval
 after real Home Assistant OS, Raspberry Pi 4 and NAS acceptance.
+
+Phase 1 adds a standard-library log-only service, avoiding HTTP/framework costs
+until Phase 6. A pinned Python Alpine image replaces a Home Assistant base image
+because no bashio/Supervisor API integration is needed yet. Docker init handles
+process reaping; Python handles shutdown. Only aarch64 is declared. An auxiliary
+amd64 build is for development validation only. No FFmpeg is bundled yet.
