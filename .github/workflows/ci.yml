@@ -15,3 +15,13 @@ jobs:
       - run: ruff format --check .
       - run: python -m pytest
       - run: python -m build
+  addon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: frenck/action-addon-linter@d51677290aef26cdfc835271dd3c7343ce502809
+        with:
+          path: camera_daily_merger
+      - run: mkdir -p work
+      - run: docker build --platform linux/amd64 -t merger:test camera_daily_merger
+      - run: python tests/integration/check_container.py --image merger:test

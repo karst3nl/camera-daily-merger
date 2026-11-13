@@ -5,11 +5,6 @@ description: Lossless daily camera exports (alpha bootstrap; processing not yet 
 url: https://github.com/karst3nl/camera-daily-merger
 arch:
   - aarch64
-startup: application
-boot: auto
-init: true
 map:
   - type: media
     read_only: false
-options: {}
-schema: {}

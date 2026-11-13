@@ -31,3 +31,7 @@ https://developers.home-assistant.io/docs/add-ons/configuration/
 It documents aarch64, application startup, Docker init, automatic /data and
 media map entries with read_only. Full Supervisor schema validation and actual
 installation remain separate acceptance checks.
+
+The current add-on linter and ARM64-emulated startup tests pass. Native Pi 4 and
+Home Assistant OS installation are still unverified. Configuration omits default
+startup/boot/init/options/schema values as required by the current linter.

@@ -73,3 +73,36 @@ an ARM64-capable environment; then finish Phase 1 and proceed to Phase 2.
 Post-review: git diff --check caught trailing Markdown whitespace on the updated
 specification status line. Removed it and reran git diff --check successfully;
 this documentation-only correction is recorded in a follow-up commit.
+
+## Phase 1 — Gate completed with emulation (2026-11-13)
+
+The previous ARM64 runtime blocker is resolved using QEMU user-mode 7.2.0,
+mounted read-only into the ARM64 container and invoked explicitly (no host
+binfmt/privileged changes). This tests ARM64 Python/service execution, not Pi
+performance, the shell entrypoint under ARM, or actual Supervisor operation.
+The native AMD64 test exercises the normal shell entrypoint.
+
+Validated configuration against the current Home Assistant app linter schema,
+upstream frenck/action-addon-linter commit
+d51677290aef26cdfc835271dd3c7343ce502809. Removed five redundant defaults caught
+by the first linter run; the repeated run passed. This replaces the outstanding
+metadata validation gate; it is not an installation in a running Supervisor.
+The linter image needed the session CA as a BuildKit secret for pip; TLS remained
+enabled and the CA was not copied into the image. Reusable container checks and
+CI linter/native container checks are now tracked.
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/python -m pytest
+docker --host=unix:///var/run/docker.sock run --rm -e INPUT_PATH=/repo/camera_daily_merger -e INPUT_COMMUNITY=false --mount type=bind,src=/workspace/camera-daily-merger,dst=/repo,readonly merger-addon-linter
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:alpha-arm64 --qemu work/qemu-aarch64-static
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:test-amd64
+```
+
+Results: 4 Python tests PASS, linter PASS, ARM64-emulated and AMD64-native
+health/restart/shutdown/source-preservation checks PASS. Actual HA OS/NAS remains
+NOT RUN / BLOCKED as explicitly permitted by the Phase 1 gate. No current
+software gate failures. Proceed to Phase 2 with synthetic fixtures only.
