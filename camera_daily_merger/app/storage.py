@@ -47,3 +47,25 @@ def open_relative(root_fd: int, path: str, *, is_directory: bool = False):
         yield descriptor
     finally:
         os.close(descriptor)
+
+
+@contextmanager
+def writable_directory(root_fd: int, path: str):
+    """Create/open only explicitly designated output directories, no symlinks."""
+    descriptor = os.dup(root_fd)
+    try:
+        for component in relative_path(path).split("/"):
+            try:
+                os.mkdir(component, mode=0o750, dir_fd=descriptor)
+            except FileExistsError:
+                pass
+            child = os.open(
+                component,
+                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                dir_fd=descriptor,
+            )
+            os.close(descriptor)
+            descriptor = child
+        yield descriptor
+    finally:
+        os.close(descriptor)

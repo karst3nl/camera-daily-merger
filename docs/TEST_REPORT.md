@@ -138,3 +138,42 @@ source link escapes, traversal, output/staging exclusion, recent/empty/growing
 files, midnight conversion and DST gaps/repeated hours. An unused test import
 was fixed before tests. Actual HA OS/NAS NOT RUN. Gate passed for mock inputs;
 next Phase 3 probing and stream-copy concatenation.
+
+## Phase 3 — Probe and stream-copy merge (2026-11-13)
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m build
+docker --host=unix:///var/run/docker.sock build --platform linux/amd64 --secret id=proxy_ca,src=/etc/ssl/certs/ca-certificates.crt -t camera-daily-merger:test-amd64 camera_daily_merger
+docker --host=unix:///var/run/docker.sock build --platform linux/arm64 --secret id=proxy_ca,src=/etc/ssl/certs/ca-certificates.crt -t camera-daily-merger:alpha-arm64 camera_daily_merger
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:alpha-arm64 --qemu work/qemu-aarch64-static
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:test-amd64
+```
+
+Results: 39 tests passed, 0 failed. Integration tests generate tiny synthetic
+MP4 files and compare packet hashes in chronological order, duration, unchanged
+source SHA256, staging cleanup and preservation of prior output. Covered single/
+zero clips, odd filenames, codec/resolution/audio incompatibility, corruption,
+space/write failures, snapshot changes and subprocess cancellation. Matching AAC
+streams merge successfully. First packet-hash tests exposed concat auto_convert;
+disabling it preserved packet hashes and passed retests. No re-encoding fallback.
+Both architecture images built with pinned FFmpeg. Cross-architecture APK index
+validation initially rejected missing ARM signing keys; copying keys from the
+trusted target Alpine stage fixed it, with signature checks kept enabled.
+ARM64-emulated FFmpeg generated a synthetic video and ffprobe reported 0.500000
+seconds; native FFmpeg version/build flags inventoried locally. Container health/
+restart/shutdown tests passed on both architectures. Emulation cannot execute
+Python's ARM child processes automatically; full merger integration ran natively
+on the host, while ARM media binaries were exercised explicitly via QEMU.
+
+Limitations: 256 clips per export; one-hour FFmpeg timeout; conservative MP4
+H.264/H.265 + AAC compatibility; hard-link publication requires same-filesystem
+NAS support. Existing outputs are no-clobber; Phase 4 will manage safe versions.
+True power loss can leave UUID.partial artifacts, never final success files.
+Real HA OS/NAS/codecs/playback NOT RUN. Third-party redistribution inventory is
+required before release. Next: Phase 4 durable jobs and immutable output versions.

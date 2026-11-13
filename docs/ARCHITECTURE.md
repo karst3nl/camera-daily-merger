@@ -40,3 +40,23 @@ writers will never append later. Every future media-processing stage must reopen
 and verify the snapshot and must reject changes before publishing. Directory
 iteration is incremental; sorting is explicit and should be scoped to a day.
 The dry-run is a local administrative CLI and reports relative source paths.
+
+Phase 3 accepts MP4 with exactly one H.264/H.265 video stream and optional AAC
+tracks; stream ordering and codec/profile/level/extradata, geometry, pixel format,
+color metadata, frame rate/timebase and audio layout must match exactly. The
+policy is deliberately conservative. Other layouts fail without conversion.
+Concat uses -c copy and -auto_convert 0; filenames never enter its manifest,
+only inherited read-only integer descriptors. Inputs are checked before/after
+processing, including current path identity. Duration tolerance is 0.5 seconds
+plus 0.25 seconds per clip to allow container/audio timestamp rounding.
+
+Large temporary files live in the designated NAS staging directory; tiny concat
+manifests use the explicit persistent-state temporary directory. Staging needs
+110% of total input bytes plus 64 MiB reserve. Outputs are probed and fsynced
+before atomic no-clobber hard-link publication on the same filesystem. NAS
+hard-link/fsync support must be verified in acceptance. Existing outputs are never
+overwritten in this phase. Exceptions remove this operation's partial file.
+Hard power loss may leave an identifiable UUID.partial for later recovery.
+At most 256 clips are accepted per job to bound descriptors; larger days fail
+explicitly pending safe chunked concatenation. FFprobe timeout is 30 seconds and
+FFmpeg timeout one hour. Real codec compatibility/playback remains unverified.
