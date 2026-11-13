@@ -8,3 +8,6 @@ arch:
 map:
   - type: media
     read_only: false
+ingress: true
+panel_icon: mdi:video
+stage: experimental

@@ -1,8 +1,8 @@
 # Alpha installation
 
-This version is a log-only bootstrap, not a recording merger. Do not rely on it
-for daily exports. No web server, ingress, host ports, privileged mode or
-Supervisor API access is enabled. Ingress is deferred to Phase 6.
+This alpha implements synthetic-tested merging, scheduling and a web interface.
+Real Home Assistant/NAS operation remains unverified. The interface uses ingress;
+no host ports, privileged mode or Supervisor API access is enabled.
 
 Home Assistant's repository installer reads the default branch. Until release,
 use a local add-on checkout of **alpha**, rather than expecting the repository
@@ -22,7 +22,8 @@ paths are not container paths. Restrict NAS credentials where possible; the
 media mount itself is writable, so application path confinement remains essential.
 This bootstrap never writes to media.
 
-Check logs for “Bootstrap ready”; stop/restart and check “Shutdown complete”.
+Check logs for “Worker ready” after source configuration; stop/restart and check
+“Shutdown complete”. Without configuration the UI explains that setup is required.
 Actual HA OS installation, mount exposure and Pi 4 operation are NOT VERIFIED.
 
 Configuration reference checked 2026-11-13:
@@ -95,3 +96,29 @@ incomplete clips before retrying. The latest 1,000 job summaries and up to 366 d
 are included per automatic reconciliation; older history is available via manual
 backfill. Earlier output versions remain on NAS. This storage cost has no automatic
 retention policy. No original recordings are ever removed.
+
+## Web interface and access
+
+Open the installed app through Home Assistant's ingress panel. The image listens
+on internal port 8099, with no host port mapping. The HTTP server accepts only the
+Supervisor IPv4 addresses resolved through the documented internal `supervisor`
+DNS name. If DNS is unavailable it accepts no HTTP peers. Forwarded IP/user
+headers do not grant access. Authentication is delegated to Home Assistant ingress
+and the default admin-only panel policy; direct network access is not supported.
+Actual Supervisor proxy routing, peer identity and iframe behavior must still be
+verified on HA OS. Do not add a public port mapping as a workaround.
+
+The interface lists camera/date status, current daily playback/download, diagnostic
+codes and a CSRF-protected reprocess action. It exposes no source manifests, full
+NAS paths or credentials. Byte ranges support seeking. H.265 playback varies by
+browser; the compatibility message offers a download without labeling the file
+corrupt. The UI always distinguishes synthetic verification from actual NAS tests.
+
+For local development only, set `MERGER_DEVELOPMENT=1` and optionally
+`MERGER_WEB_PORT=8099`. This explicitly trusts loopback and binds only 127.0.0.1.
+Keep that mode disabled in the add-on. Browser gate:
+
+```sh
+.venv/bin/python -m pip install '.[dev,browser]'
+.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium
+```

@@ -90,3 +90,16 @@ source diagnostics block the affected camera/date; unknown timestamps block all
 requested dates for that camera. Diagnostics are stored without source paths.
 An independent heartbeat thread avoids false unhealthy status during long merges.
 Concurrency remains fixed at one; increasing it is intentionally not exposed yet.
+
+Phase 6 uses Python's small standard-library HTTP server with at most four active
+request threads, 15-second socket timeouts and 64 KiB streaming chunks. Ingress
+peers are resolved from the documented Supervisor hostname, with fail-closed DNS
+handling and no trust in forwarding headers. HA ingress supplies user authentication;
+there is no public standalone authentication mode. Administrative POST requires a
+same-origin-readable random CSRF token and bounded JSON, then validates the camera/
+calendar date. Static assets and API paths are allowlisted. Video lookup accepts
+only camera/date identifiers and a DB-managed immutable filename under the output
+root; safe descriptor opens reject symlinks. The interface never returns manifests,
+full NAS paths or credentials. Browser assets use relative URLs for ingress prefixes,
+external JS/CSS and a restrictive same-origin CSP. Local development requires an
+explicit loopback-only override. Actual ingress remains an acceptance gate.

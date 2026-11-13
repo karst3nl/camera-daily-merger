@@ -25,3 +25,8 @@
 - Phase 5: 00:15 local calendar scheduling, bounded restart backfill, periodic
   reconciliation, manual historical enqueue, persistent scheduling metadata,
   scanner diagnostics blocking partial days and independent service heartbeat.
+- Phase 6: responsive ingress-only UI with camera/date selection, current daily
+  playback/download, history/diagnostics and CSRF-protected manual reprocessing.
+- Bounded HTTP workers, safe output lookup, byte-range streaming and no public
+  port mapping; desktop/mobile Chromium flow verified with synthetic H.264.
+- Include MIT and third-party notices in the add-on build context/image.

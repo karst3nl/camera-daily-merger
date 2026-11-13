@@ -23,7 +23,8 @@ recordings, credentials, private network details, logs or local databases.
 
 See [specification](docs/SPECIFICATION.md), [implementation plan](docs/CODEX_IMPLEMENTATION_PLAN.md),
 [architecture](docs/ARCHITECTURE.md) and [test report](docs/TEST_REPORT.md).
-A log-only alpha installation skeleton is described in [setup](docs/SETUP.md). Real Reolink layouts, Home Assistant OS and NAS
+Synthetic end-to-end merging, scheduling and a protected web interface are implemented.
+See [alpha setup](docs/SETUP.md) and the test report before installing. Real Reolink layouts, Home Assistant OS and NAS
 operation remain unverified. This is not a production-ready add-on.
 
 ## License

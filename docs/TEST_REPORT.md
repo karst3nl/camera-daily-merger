@@ -229,3 +229,44 @@ Reconciliation defaults: six hours, seven-day initial backfill; maximum 366 date
 and latest 1,000 job summaries per pass. Older history requires explicit manual
 backfill. Concurrency is one. Actual HA OS/NAS scheduling/reboot remains NOT RUN.
 Next: Phase 6 ingress-only UI, validated manual actions and protected playback.
+
+## Phase 6 — Web interface and ingress integration (2026-11-13)
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium
+.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:alpha-arm64 --qemu work/qemu-aarch64-static
+docker --host=unix:///var/run/docker.sock run --rm -e INPUT_PATH=/repo/camera_daily_merger -e INPUT_COMMUNITY=false --mount type=bind,src=/workspace/camera-daily-merger,dst=/repo,readonly merger-addon-linter
+```
+
+Results: 59 tests passed, 0 failed; current add-on linter passed. New API integration
+covers unauthorized peer denial even with forged forwarding headers, CSRF denial,
+invalid/future camera/date, traversal attempts, safe summaries, no configuration
+path disclosure, playback/download, HEAD, byte/suffix ranges, invalid ranges,
+missing outputs and symlink rejection. MIT/third-party notices match the copies
+included in the image; wheel inspection confirmed static assets and MIT license.
+
+Playwright 1.57.0 with local Chromium passed desktop (1280x1100) and mobile
+(390x844) checks: no horizontal overflow, synthetic H.264 playback, download,
+manual reprocess enqueue, codec-compatibility error message and no JS errors.
+Screenshots were visually reviewed locally; they contain synthetic content only
+and are not tracked. H.265 decode is NOT VERIFIED: the error branch was simulated,
+not a claim of real H.265 playback. Browser tooling is an optional dev dependency.
+Native scheduled container merge/restart/source-hash checks and ARM64-emulated
+service checks passed. Existing hosted GitHub CI runs through Phase 5 were
+observed completed/success via the repository actions API.
+
+Ingress is configured with no host port mapping; the server trusts only the
+Supervisor DNS-resolved peer. Internal DNS behavior was checked against current
+Home Assistant communication documentation. Actual ingress authentication,
+Supervisor peer/iframe behavior and HA OS installation are NOT RUN / BLOCKED.
+This explicitly permitted Phase 6 limitation transfers to real acceptance;
+no production-ready claim. Next Phase 7 documentation and owner/device evidence.

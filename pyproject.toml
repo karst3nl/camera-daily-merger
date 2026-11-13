@@ -11,6 +11,7 @@ license = {file = "LICENSE"}
 
 [project.optional-dependencies]
 dev = ["pytest==8.3.5", "ruff==0.11.0", "build==1.2.2.post1"]
+browser = ["playwright==1.57.0"]
 
 [tool.setuptools.packages.find]
 include = ["camera_daily_merger*"]
@@ -20,3 +21,6 @@ testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py312"
+
+[tool.setuptools.package-data]
+"camera_daily_merger.app" = ["static/*"]

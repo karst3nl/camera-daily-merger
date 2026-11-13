@@ -14,6 +14,7 @@ from .backfill import load_settings
 from .jobs import run_one, worker_lock
 from .persistence import Store
 from .scheduler import Schedule, Scheduler
+from .web import serve
 
 
 def validate_storage(data: Path, media: Path) -> None:
@@ -52,54 +53,68 @@ def run(data: Path, media: Path, stop: threading.Event) -> None:
     thread = threading.Thread(target=beat, daemon=True)
     thread.start()
     try:
-        config = Path(os.environ.get("MERGER_CONFIG", str(data / "discovery.json")))
-        if not config.exists():
-            logging.info(
-                "No source configuration; processing disabled until configured and restarted"
-            )
-            stop.wait()
+        if stop.is_set():
             return
-        settings = load_settings(config)
-        if not settings.root.is_relative_to(media):
+        config = Path(os.environ.get("MERGER_CONFIG", str(data / "discovery.json")))
+        settings = load_settings(config) if config.exists() else None
+        if settings and not settings.root.is_relative_to(media):
             raise ValueError("Configured source root must be within media mount")
-        schedule_path = data / "schedule.json"
-        schedule_values = (
-            json.loads(schedule_path.read_text()) if schedule_path.exists() else {}
-        )
-        schedule = Schedule(
-            reconcile_seconds=int(
-                os.environ.get(
-                    "MERGER_RECONCILE_SECONDS",
-                    schedule_values.get("reconcile_seconds", 21600),
+        store = Store(data / "jobs.sqlite")
+        development = os.environ.get("MERGER_DEVELOPMENT") == "1"
+        with serve(
+            store,
+            settings,
+            host="127.0.0.1" if development else "0.0.0.0",
+            port=int(os.environ.get("MERGER_WEB_PORT", "8099")),
+            peers={"127.0.0.1"} if development else None,
+        ):
+            if not settings:
+                logging.info(
+                    "No source configuration; processing disabled until configured and restarted"
                 )
-            ),
-            backfill_days=int(
-                os.environ.get(
-                    "MERGER_BACKFILL_DAYS", schedule_values.get("backfill_days", 7)
+                stop.wait()
+                return
+            schedule_path = data / "schedule.json"
+            values = (
+                json.loads(schedule_path.read_text()) if schedule_path.exists() else {}
+            )
+            schedule = Schedule(
+                reconcile_seconds=int(
+                    os.environ.get(
+                        "MERGER_RECONCILE_SECONDS",
+                        values.get("reconcile_seconds", 21600),
+                    )
+                ),
+                backfill_days=int(
+                    os.environ.get(
+                        "MERGER_BACKFILL_DAYS", values.get("backfill_days", 7)
+                    )
+                ),
+            )
+            with worker_lock(data):
+                store.recover(time.time())
+                scheduler = Scheduler(store, settings, schedule)
+                logging.info(
+                    "Worker ready; automatic scheduling enabled, concurrency=1"
                 )
-            ),
-        )
-        with worker_lock(data):
-            store = Store(data / "jobs.sqlite")
-            store.recover(time.time())
-            scheduler = Scheduler(store, settings, schedule)
-            logging.info("Worker ready; automatic scheduling enabled, concurrency=1")
-            next_scan = 0
-            while not stop.is_set():
-                now = datetime.now(UTC)
-                if now.timestamp() >= next_scan:
-                    try:
-                        report = scheduler.tick(now)
-                        if report["diagnostics"]:
-                            logging.warning(
-                                "Discovery blocked %d camera/date diagnostics",
-                                len(report["diagnostics"]),
+                next_scan = 0
+                while not stop.is_set():
+                    now = datetime.now(UTC)
+                    if now.timestamp() >= next_scan:
+                        try:
+                            report = scheduler.tick(now)
+                            if report["diagnostics"]:
+                                logging.warning(
+                                    "Discovery blocked %d camera/date diagnostics",
+                                    len(report["diagnostics"]),
+                                )
+                        except OSError:
+                            logging.error(
+                                "Storage scan unavailable; retrying next minute"
                             )
-                    except OSError:
-                        logging.error("Storage scan unavailable; retrying next minute")
-                    next_scan = (int(now.timestamp()) // 60 + 1) * 60
-                if not run_one(store, settings, data, stop):
-                    stop.wait(min(20, max(0.1, next_scan - time.time())))
+                        next_scan = (int(now.timestamp()) // 60 + 1) * 60
+                    if not run_one(store, settings, data, stop):
+                        stop.wait(min(20, max(0.1, next_scan - time.time())))
     finally:
         stop.set()
         thread.join(timeout=21)
