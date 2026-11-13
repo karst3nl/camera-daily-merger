@@ -177,3 +177,23 @@ NAS support. Existing outputs are no-clobber; Phase 4 will manage safe versions.
 True power loss can leave UUID.partial artifacts, never final success files.
 Real HA OS/NAS/codecs/playback NOT RUN. Third-party redistribution inventory is
 required before release. Next: Phase 4 durable jobs and immutable output versions.
+
+## Phase 4 — Persistence and retry (2026-11-13)
+
+Commands: `.venv/bin/ruff format .`, `.venv/bin/ruff check .`,
+`.venv/bin/python -m pytest`, `.venv/bin/python -m build`,
+`.venv/bin/python work/scan.py`, `git diff --check`.
+
+Results: 43 tests passed, 0 failed. Added real synthetic-merge job integration
+covering duplicate enqueue, durable success after reopening the DB, late clips,
+cancelled rebuild retaining previous output, due retry, version promotion,
+corrupted-output rebuild, concurrent claims, stale completion after simulated
+crash/reopen, worker exclusion, retry exhaustion/new-manifest reset and migration
+initialization/newer-schema rejection. Existing media/security tests still pass.
+
+The process-kill/power-loss behavior on actual HA/NAS is NOT RUN. Recovery is
+verified by persisted running-state simulation and store reopening. Immutable
+versions avoid destructive replacement, but crashes can leave unreferenced
+versions/partials; they are retained. SHA256 output integrity checks add bounded
+sequential NAS I/O. No automatic cleanup/deletion. Actual HA OS/NAS NOT RUN.
+Next: Phase 5 scheduler, missed-run recovery, reconciliation and manual backfill.

@@ -60,3 +60,23 @@ Hard power loss may leave an identifiable UUID.partial for later recovery.
 At most 256 clips are accepted per job to bound descriptors; larger days fail
 explicitly pending safe chunked concatenation. FFprobe timeout is 30 seconds and
 FFmpeg timeout one hour. Real codec compatibility/playback remains unverified.
+
+Phase 4 uses SQLite WAL/full synchronous transactions for queued/running/success/
+failed state, attempts, manifests, errors and transition history. Atomic claims
+use random attempt tokens; stale completions are rejected. The worker holds an
+exclusive local flock for its entire lifetime, then recovers interrupted running
+rows on startup. This prevents a second worker from declaring a live job crashed.
+Retries are capped at five attempts with 30-second exponential backoff (maximum
+one hour); explicit manual force or a changed manifest resets the budget.
+
+Design refinement: managed exports use immutable YYYY-MM-DD-<attempt-token>.mp4
+versions instead of replacing YYYY-MM-DD.mp4. The database points to exactly one
+current daily export only after validation/publication. A failed rebuild retains
+the previous pointer. This avoids overwriting unknown pre-existing files and
+narrows the filesystem/SQLite crash window. A crash after publication but before
+DB commit can leave an unreferenced valid version; it is never presented as a
+success and is not automatically deleted. Older versions remain on NAS; no
+retention/deletion policy is implemented. This costs space during retries, which
+is preferable to risking original or previous-export loss. Legacy outputs are
+not automatically adopted. Reconciliation hashes the current output sequentially
+to detect missing/corrupt output, adding NAS read I/O but bounded memory.

@@ -19,3 +19,6 @@
   publication and synthetic packet-order/source-hash tests.
 - Explicit initial limits: 256 clips per export, MP4 H.264/H.265 with optional
   matching AAC; no transcoding or overwriting of existing output.
+- Phase 4: durable SQLite manifests/state/history, atomic job claims, lifetime
+  worker locking, interrupted-run recovery, five-attempt retry cap and immutable
+  managed output versions preserving previous successful exports.

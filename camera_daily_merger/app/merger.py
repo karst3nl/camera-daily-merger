@@ -31,6 +31,7 @@ def merge(
     temporary_directory: str,
     cancel: threading.Event | None = None,
     reserve_bytes: int = 64 * 1024 * 1024,
+    output_token: str | None = None,
 ) -> Output:
     if not clips or len(clips) > 256:
         raise MediaError("Expected 1..256 clips per export")
@@ -144,7 +145,13 @@ def merge(
             os.lseek(output_fd, 0, os.SEEK_SET)
             with os.fdopen(os.dup(output_fd), "rb") as readable:
                 digest = hashlib.file_digest(readable, "sha256").hexdigest()
-            final = f"{day.isoformat()}.mp4"
+            if output_token is not None:
+                if len(output_token) != 32 or any(
+                    c not in "0123456789abcdef" for c in output_token
+                ):
+                    raise ValueError("Invalid output version token")
+            suffix = "-" + output_token if output_token else ""
+            final = f"{day.isoformat()}{suffix}.mp4"
             # Hard-link publication is atomic and cannot overwrite an existing output.
             os.link(
                 name,

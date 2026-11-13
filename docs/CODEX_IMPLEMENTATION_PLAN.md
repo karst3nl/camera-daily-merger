@@ -234,3 +234,11 @@ Update `docs/TEST_REPORT.md` accordingly.
 - `ffprobe` output from a few representative clips, if available.
 - Confirmation of NAS share permissions and actual HA OS media mounting.
 - Access to actual HA OS environment, or owner-provided manual test results with logs.
+
+## Implementation refinements
+
+Phase 4: use immutable attempt-token output filenames with a SQLite current-output
+pointer, rather than overwriting the date-only pathname. This preserves unknown
+colliding files and previous successful exports across crashes. Only one version
+is current per camera/date; older/orphan versions remain until an explicitly
+approved future cleanup policy. See ARCHITECTURE.md for tradeoffs.
