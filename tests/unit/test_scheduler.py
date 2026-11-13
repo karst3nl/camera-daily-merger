@@ -125,3 +125,65 @@ def test_reconciliation_late_arrival_and_healthy_skip(tmp_path):
         )
         assert scheduler.tick(now + timedelta(days=1))["queued"] == 0
         assert store.get("a", DAY.isoformat())["attempts"] == 1
+
+
+@pytest.mark.parametrize(
+    "pattern,format,detail",
+    [
+        (
+            r".+_00_(?P<start>\\d{14})\\.mp4",
+            "%Y%m%d%H%M%S",
+            "filename_pattern_mismatch",
+        ),
+        (r".+_00_(?P<start>\d{14})\.mp4", "iso8601", "timestamp_format_mismatch"),
+    ],
+)
+def test_compact_diagnostics_identify_adapter_problem(
+    tmp_path, pattern, format, detail
+):
+    source = tmp_path / "input"
+    source.mkdir()
+    filename = "camera_a_00_20260101120000.mp4"
+    path = source / filename
+    path.write_bytes(b"synthetic")
+    os.utime(path, (1, 1))
+    settings = Settings(
+        root=tmp_path,
+        cameras={"a": "input"},
+        timestamp_pattern=pattern,
+        timestamp_format=format,
+    )
+    store = Store(tmp_path / "jobs.sqlite")
+    result = Scheduler(store, settings).reconcile(
+        {date(2026, 1, 1)}, datetime(2026, 1, 2, 12, tzinfo=UTC)
+    )
+    diagnostic = result["diagnostics"][0]
+    assert diagnostic["reason"] == "invalid_timestamp"
+    assert diagnostic["detail"] == detail
+    assert diagnostic["examples"] == [filename]
+    assert diagnostic["count"] == 1
+    assert result["queued"] == 0
+    assert str(tmp_path) not in str(diagnostic)
+
+
+def test_diagnostic_examples_are_bounded_and_keep_blocking_unknown_files(tmp_path):
+    root = tmp_path / "input"
+    root.mkdir()
+    for n in range(10):
+        path = root / f"unknown_{n}.mp4"
+        path.write_bytes(b"synthetic")
+        os.utime(path, (1, 1))
+    settings = Settings(
+        root=tmp_path,
+        cameras={"a": "input"},
+        timestamp_pattern=r"camera_00_(?P<start>\d{14})\.mp4",
+        timestamp_format="%Y%m%d%H%M%S",
+    )
+    store = Store(tmp_path / "jobs.sqlite")
+    result = Scheduler(store, settings).reconcile(
+        {DAY}, datetime(2026, 11, 13, 12, tzinfo=UTC)
+    )
+    assert result["queued"] == 0
+    assert len(result["diagnostics"]) == 1
+    assert result["diagnostics"][0]["count"] == 10
+    assert len(result["diagnostics"][0]["examples"]) == 3

@@ -6,6 +6,14 @@ from typing import Protocol
 from zoneinfo import ZoneInfo
 
 
+class TimestampError(ValueError):
+    """Controlled diagnostic code without recording metadata."""
+
+    def __init__(self, code: str):
+        super().__init__(code)
+        self.code = code
+
+
 class TimestampParser(Protocol):
     def parse(self, name: str) -> datetime: ...
 
@@ -19,14 +27,17 @@ class RegexTimestampParser:
     def parse(self, name: str) -> datetime:
         match = self.pattern.fullmatch(name)
         if not match:
-            raise ValueError("Filename does not match configured timestamp adapter")
+            raise TimestampError("filename_pattern_mismatch")
         value = match.group("start")
-        if self.timestamp_format == "iso8601":
-            if "T" not in value and " " not in value:
-                raise ValueError("Recording timestamp requires a time component")
-            start = datetime.fromisoformat(value)
-        else:
-            start = datetime.strptime(value, self.timestamp_format)
+        try:
+            if self.timestamp_format == "iso8601":
+                if "T" not in value and " " not in value:
+                    raise ValueError("Missing time component")
+                start = datetime.fromisoformat(value)
+            else:
+                start = datetime.strptime(value, self.timestamp_format)
+        except ValueError as error:
+            raise TimestampError("timestamp_format_mismatch") from error
         if start.tzinfo is not None:
             return start.astimezone(self.zone)
         # Round-trip both folds. A gap has no valid instant; a repeated hour has two.
@@ -40,5 +51,5 @@ class RegexTimestampParser:
             == start
         }
         if len(candidates) != 1:
-            raise ValueError("Ambiguous or nonexistent local recording timestamp")
+            raise TimestampError("ambiguous_or_nonexistent_local_time")
         return candidates.pop().astimezone(self.zone)

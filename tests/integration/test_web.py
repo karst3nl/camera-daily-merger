@@ -123,3 +123,29 @@ def test_video_ranges_download_missing_and_symlink(tmp_path):
         assert request(video)[0] == 404
         path.symlink_to(tmp_path / "input" / next((tmp_path / "input").iterdir()).name)
         assert request(video)[0] == 404
+
+
+def test_diagnostic_basenames_visible_only_to_authorized_ingress(tmp_path):
+    from camera_daily_merger.app.scheduler import Scheduler
+    from datetime import UTC, datetime
+    import os
+
+    source = tmp_path / "input"
+    source.mkdir()
+    filename = "unmatched<img src=x onerror=alert(1)>.mp4"
+    path = source / filename
+    path.write_bytes(b"synthetic")
+    os.utime(path, (1, 1))
+    with application(tmp_path) as (url, store, settings, _):
+        Scheduler(store, settings).reconcile(
+            {DAY}, datetime(2026, 11, 13, 12, tzinfo=UTC)
+        )
+        status, body, _ = request(url + "/api/status")
+        assert status == 200
+        data = json.loads(body)
+        assert data["diagnostics"][0]["examples"] == [filename]
+        assert str(tmp_path).encode() not in body
+    with application(tmp_path, peers=set()) as (url, *_):
+        status, body, _ = request(url + "/api/status")
+        assert status == 403
+        assert filename.encode() not in body

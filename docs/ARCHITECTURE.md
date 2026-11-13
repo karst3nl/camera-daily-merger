@@ -115,3 +115,11 @@ formats allow compact timestamps without hardcoding camera names or Reolink
 semantics. Tests use anonymized synthetic YYYY/MM/DD directories and compact
 names. Filename time remains authoritative for grouping, subject to confirming
 its meaning/timezone with the owner. Calendar folder names do not override it.
+
+Discovery diagnostics now retain a controlled parser detail code and a bounded
+sample of three basenames per camera/date/reason/detail group, plus a count.
+They are private local SQLite metadata delivered only after ingress peer checks,
+never raw source directories or log output. UI rendering uses textContent and
+wraps long names; untrusted HTML-looking names remain text. Existing diagnostic
+records without these optional fields continue to render. Blocking semantics
+are unchanged; unknown recordings are not silently omitted to unblock a day.

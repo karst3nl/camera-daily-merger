@@ -6,14 +6,23 @@ async function api(path, options) {
   if (!response.ok) throw new Error(`Request failed (${response.status}).`);
   return response.json();
 }
+function diagnosticText(d) {
+  const hints = {
+    filename_pattern_mismatch: 'Check timestamp_pattern and extra backslashes.',
+    timestamp_format_mismatch: 'Check timestamp_format; compact digits need %Y%m%d%H%M%S.',
+    ambiguous_or_nonexistent_local_time: 'The local time is ambiguous or nonexistent at a DST transition.'
+  };
+  const examples = d.examples && d.examples.length ? ` · File examples: ${d.examples.join(', ')}` : '';
+  return `${d.camera} · ${d.day}: ${d.reason}${d.detail ? ` (${d.detail})` : ''}${Number.isInteger(d.count) ? ` · ${d.count} affected entries` : ''}${examples}${hints[d.detail] ? ` · ${hints[d.detail]}` : ''}`;
+}
 async function refresh() {
   const status = await api('status'); csrf = status.csrf;
-  el('verification').textContent = status.verification;
+  el('verification').textContent = `${status.version || 'Alpha'} · ${status.verification}`;
   const selected = el('camera').value;
   el('camera').replaceChildren(...status.cameras.map(name => {const o=document.createElement('option');o.value=name;o.textContent=name;return o;}));
   if (status.cameras.includes(selected)) el('camera').value=selected;
   el('reprocess').disabled = !status.configured;
-  el('diagnostics').textContent = status.diagnostics.map(d=>`${d.camera} · ${d.day}: ${d.reason}`).join(' | ');
+  el('diagnostics').textContent = status.diagnostics.map(diagnosticText).join(' | ');
   if (!status.configured) el('message').textContent='Source configuration is required before processing.';
   jobs = await api('jobs');
   el('jobs').replaceChildren(...jobs.map(job=>{
@@ -40,7 +49,7 @@ el('refresh').addEventListener('click',()=>refresh().catch(e=>el('message').text
 el('reprocess').addEventListener('click',async()=>{
   el('reprocess').disabled=true;
   try {const result=await api('reprocess',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({camera:el('camera').value,day:el('day').value})});
-    el('message').textContent=result.diagnostics.length?'Discovery issues blocked this day. See diagnostics.':result.queued?'Day queued for sequential processing.':'No new job queued; it may already be pending or have no eligible clips.';
+    el('message').textContent=result.diagnostics.length?`Processing blocked: ${diagnosticText(result.diagnostics[0])}`:result.queued?'Day queued for sequential processing.':'No new job queued; it may already be pending or have no eligible clips.';
     await refresh();
   } catch(e) {el('message').textContent=e.message;} finally {el('reprocess').disabled=false;}
 });

@@ -1,11 +1,12 @@
 """Explicit Playwright browser gate; requires playwright and a local Chromium."""
 
 import argparse
+import os
 from pathlib import Path
 import tempfile
 import threading
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 from camera_daily_merger.app.jobs import enqueue, run_one, worker_lock
 from camera_daily_merger.app.persistence import Store
@@ -62,6 +63,20 @@ def main():
                 "Day queued for sequential processing.", exact=True
             ).wait_for()
             assert store.get("a", str(DAY))["status"] == "queued"
+            bad_name = "unmatched<img src=x onerror=alert(1)>.mp4"
+            bad_path = root / "input" / bad_name
+            bad_path.write_bytes(b"synthetic")
+            os.utime(bad_path, (1, 1))
+            page.get_by_role("button", name="Reprocess day").click()
+            expect(page.locator("#message")).to_contain_text(
+                "filename_pattern_mismatch"
+            )
+            assert bad_name in page.locator("#message").inner_text()
+            assert bad_name in page.locator("#diagnostics").inner_text()
+            assert page.locator("#diagnostics img").count() == 0
+            assert page.evaluate(
+                "document.documentElement.scrollWidth <= window.innerWidth"
+            )
             assert not errors, errors
             browser.close()
             print(

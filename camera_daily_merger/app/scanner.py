@@ -11,7 +11,7 @@ from typing import Iterator
 
 from .settings import Settings
 from .storage import directory, open_relative
-from .timestamp_parser import RegexTimestampParser, TimestampParser
+from .timestamp_parser import RegexTimestampParser, TimestampError, TimestampParser
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,7 @@ class Diagnostic:
     camera: str
     path: str
     reason: str
+    detail: str | None = None
 
 
 def signature(info: os.stat_result) -> tuple[int, int, int, int]:
@@ -84,6 +85,14 @@ def scan(
                                         continue
                                     try:
                                         start = parser.parse(entry.name)
+                                    except TimestampError as error:
+                                        yield Diagnostic(
+                                            camera,
+                                            relative,
+                                            "invalid_timestamp",
+                                            error.code,
+                                        )
+                                        continue
                                     except ValueError:
                                         yield Diagnostic(
                                             camera, relative, "invalid_timestamp"

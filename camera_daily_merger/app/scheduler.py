@@ -48,7 +48,7 @@ class Scheduler:
             raise ValueError("Only completed scheduled calendar days may be processed")
         cameras = [camera] if camera else list(self.settings.cameras)
         grouped = {(name, day): [] for name in cameras for day in days}
-        blocked = set()
+        blocked = {}
         parser = RegexTimestampParser(
             self.settings.timestamp_pattern,
             self.settings.timezone,
@@ -69,10 +69,23 @@ class Scheduler:
                 except ValueError:
                     affected = days
                 for day in affected:
-                    blocked.add((item.camera, day, item.reason))
+                    key = item.camera, day, item.reason, item.detail or ""
+                    entry = blocked.setdefault(key, {"count": 0, "examples": []})
+                    entry["count"] += 1
+                    if (
+                        item.reason == "invalid_timestamp"
+                        and len(entry["examples"]) < 3
+                    ):
+                        # Only basenames, local authenticated UI; no source directories.
+                        name = "".join(
+                            c if c.isprintable() else "?"
+                            for c in PurePosixPath(item.path).name
+                        )[:255]
+                        if name not in entry["examples"]:
+                            entry["examples"].append(name)
         queued = 0
         for (name, day), selected in grouped.items():
-            if any(c == name and d == day for c, d, _ in blocked):
+            if any(c == name and d == day for c, d, _, _ in blocked):
                 continue
             if selected:
                 queued += enqueue(
@@ -85,8 +98,14 @@ class Scheduler:
                     force=force,
                 )
         errors = [
-            {"camera": name, "day": day.isoformat(), "reason": reason}
-            for name, day, reason in sorted(blocked)
+            {
+                "camera": name,
+                "day": day.isoformat(),
+                "reason": reason,
+                "detail": detail or None,
+                **values,
+            }
+            for (name, day, reason, detail), values in sorted(blocked.items())
         ]
         self.store.metadata("scan_diagnostics", errors)
         return {"queued": queued, "diagnostics": errors}

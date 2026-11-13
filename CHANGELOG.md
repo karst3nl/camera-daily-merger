@@ -51,3 +51,7 @@
 - Clarified relative, case-sensitive camera folder paths versus logical camera IDs.
 - Scanner diagnostics now distinguish missing folders, permission denial, unsafe
   directory/link paths and NAS I/O errors without exposing raw exception paths.
+- Alpha.5: discovery diagnostics distinguish filename-pattern, timestamp-format
+  and DST errors and show up to three offending basenames in the authenticated UI.
+- Reprocess results show the actual first diagnostic instead of only a generic
+  blocked message; the UI displays its backend version for upgrade verification.

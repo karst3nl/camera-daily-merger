@@ -13,6 +13,7 @@ import socket
 import threading
 from urllib.parse import parse_qs, urlsplit
 
+from . import APP_VERSION
 from .persistence import Store
 from .scheduler import Scheduler
 from .settings import Settings
@@ -123,6 +124,7 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                     200,
                     {
                         "configured": settings is not None,
+                        "version": APP_VERSION,
                         "cameras": sorted(settings.cameras) if settings else [],
                         "csrf": csrf,
                         "verification": "Synthetic tests only; real HA OS/NAS unverified",

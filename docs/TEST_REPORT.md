@@ -378,3 +378,47 @@ scanner categories. Tests use synthetic names and simulated permission denial.
 Final full-suite result: 76 passed, 0 failed. Native compact-name container pipeline
 passed before this classification-only scanner change; no media write behavior
 was changed. Real-device full acceptance remains blocked.
+
+## Phase 7 owner feedback — actionable discovery diagnostics (alpha.5)
+
+Owner still encounters blocked discovery after providing seven syntactically
+valid compact filename examples. The earlier summary did not identify the bad
+entry or distinguish regex mismatch from timestamp-format/DST failure. Actual
+NAS root cause remains UNCONFIRMED; no real source was opened or modified here.
+
+Added controlled parser detail codes and bounded local basename examples (three
+per diagnostic group), counts, UI hints and a visible backend version. Full source
+directories, raw configuration and private exception strings remain absent from
+HTTP output/logging. Access remains restricted to authenticated ingress peers.
+Potential unknown recordings still block the requested day; no skip policy was
+introduced. Tracked tests use anonymized synthetic names only.
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+.venv/bin/python work/scan.py
+git diff --check
+```
+
+Results: 80 tests passed, 0 failed. New regressions distinguish overescaped regex
+from ISO/compact format mismatch, bound samples while preserving blocking, and
+verify basenames/full-path exclusion and denied-peer privacy. Browser flow passed
+with an HTML-looking synthetic filename shown as plain text in the blocking
+message/diagnostics, no injected image, no horizontal overflow or JS errors.
+The first new browser assertion used a string wait_for_function rejected by CSP;
+replaced the test assertion with Playwright's locator expectation and reran it
+successfully. CSP was not relaxed. Existing playback/download/reprocess checks
+also passed. Real NAS reprocess after upgrading remains NOT RUN / BLOCKED.
+
+Alpha.5 native image build and compact-name scheduled container pipeline also
+passed: automatic merge, current output, restart idempotency, graceful shutdown
+and unchanged synthetic source hash. Commands: native Docker build with the
+session CA secret, then `.venv/bin/python tests/integration/check_pipeline.py
+--image camera-daily-merger:test-amd64 --compact`.

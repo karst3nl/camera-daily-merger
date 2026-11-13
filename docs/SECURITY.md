@@ -23,3 +23,9 @@ pinned image/dependency vulnerabilities and complete third-party source/notices.
 Please report suspected vulnerabilities privately to the repository owner through
 an available private GitHub security reporting channel; if unavailable, contact
 the owner without publishing exploit details or private recording metadata.
+
+Authenticated discovery diagnostics may include up to three offending recording
+basenames per diagnostic group to support local troubleshooting. They never
+include source directories and are not logged or uploaded. Treat those names and
+the SQLite state as private. The frontend renders names as text; HTML-looking
+filenames cannot inject markup. Unauthorized HTTP peers cannot retrieve them.

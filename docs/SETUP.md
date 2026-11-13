@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.4 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.5 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -207,3 +207,22 @@ folder spelling/case), `source_directory_permission_denied` (read permissions),
 `source_directory_not_directory_or_symlink` and `source_directory_io_error`.
 The same directory problem may appear for every date in the recovery window;
 this does not establish that seven separate date folders are missing.
+
+## Finding the recording that blocks a day
+
+Alpha.5 shows the backend version beside verification status. After upgrading,
+restart and refresh the UI, then reprocess the requested date. Invalid timestamp
+rows include a controlled detail code, the number of affected entries and up to
+three example basenames (no source directories). Examples appear only through
+authenticated ingress and are rendered as text, including unusual filenames.
+
+- `filename_pattern_mismatch`: inspect timestamp_pattern and unintended escaping.
+- `timestamp_format_mismatch`: compact 14-digit names need `%Y%m%d%H%M%S`, not
+  the ISO adapter. Confirm the effective saved configuration and restart.
+- `ambiguous_or_nonexistent_local_time`: resolve DST timestamp ambiguity using a
+  reliable explicit-offset source adapter; do not guess an offset.
+
+Unknown timestamps still block requested dates; the app does not silently skip
+potential recordings. Recursive discovery can find a mismatching MP4 outside the
+selected calendar folder. Never delete or rename originals to bypass diagnostics.
+Do not publish private example names or the local database in bug reports.
