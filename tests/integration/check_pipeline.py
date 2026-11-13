@@ -53,11 +53,11 @@ def main():
             check=True,
         )
         digest = hashlib.sha256(source.read_bytes()).hexdigest()
-        (data / "discovery.json").write_text(
+        (data / "options.json").write_text(
             json.dumps(
                 {
-                    "root": "/media",
-                    "cameras": {"synthetic": "input"},
+                    "source_root": "/media",
+                    "cameras": [{"id": "synthetic", "path": "input"}],
                     "timestamp_pattern": r"(?P<start>.+)\.mp4",
                     "minimum_age_seconds": 0,
                 }

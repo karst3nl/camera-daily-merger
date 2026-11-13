@@ -96,3 +96,17 @@ def test_worker_lock_and_migration(tmp_path):
         db.execute("PRAGMA user_version=999")
     with pytest.raises(ValueError, match="schema"):
         Store(path)
+
+
+def test_v1_migration_preserves_queued_work(tmp_path):
+    path = tmp_path / "jobs.sqlite"
+    store = Store(path)
+    store.enqueue("a", str(DAY), [], 0)
+    with sqlite3.connect(path) as db:
+        db.execute("DROP TABLE metadata")
+        db.execute("PRAGMA user_version=1")
+    migrated = Store(path)
+    assert migrated.get("a", str(DAY))["status"] == "queued"
+    assert migrated.metadata("cursor") is None
+    migrated.metadata("cursor", {"day": str(DAY)})
+    assert Store(path).metadata("cursor") == {"day": str(DAY)}

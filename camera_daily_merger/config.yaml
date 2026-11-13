@@ -1,7 +1,7 @@
 name: Camera Daily Merger
-version: 0.1.0-alpha.1
+version: 0.1.0-alpha.2
 slug: camera_daily_merger
-description: Lossless daily camera exports (alpha bootstrap; processing not yet available)
+description: Lossless daily camera exports (alpha; real NAS acceptance pending)
 url: https://github.com/karst3nl/camera-daily-merger
 arch:
   - aarch64
@@ -11,3 +11,25 @@ map:
 ingress: true
 panel_icon: mdi:video
 stage: experimental
+options:
+  source_root: /media/reolink
+  cameras: []
+  timestamp_pattern: ''
+  timezone: Europe/Berlin
+  output: daily
+  staging: .staging
+  minimum_age_seconds: 60
+  reconcile_seconds: 21600
+  backfill_days: 7
+schema:
+  source_root: str
+  cameras:
+    - id: str
+      path: str
+  timestamp_pattern: str
+  timezone: str
+  output: str
+  staging: str
+  minimum_age_seconds: int(0,86400)
+  reconcile_seconds: int(60,604800)
+  backfill_days: int(1,366)

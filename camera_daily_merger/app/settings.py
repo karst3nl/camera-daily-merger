@@ -64,3 +64,25 @@ class Settings:
             )
         ):
             raise ValueError("Camera mappings and simple extensions are required")
+
+
+def from_addon_options(options: dict) -> Settings | None:
+    """Empty alpha defaults require explicit adapter configuration before processing."""
+    mappings = options.get("cameras", [])
+    if not mappings or not options.get("timestamp_pattern"):
+        return None
+    try:
+        cameras = {entry["id"]: entry["path"] for entry in mappings}
+        if len(cameras) != len(mappings):
+            raise ValueError("Duplicate camera IDs")
+        return Settings(
+            root=Path(options["source_root"]),
+            cameras=cameras,
+            timestamp_pattern=options["timestamp_pattern"],
+            timezone=options.get("timezone", "Europe/Berlin"),
+            output=options.get("output", "daily"),
+            staging=options.get("staging", ".staging"),
+            minimum_age_seconds=options.get("minimum_age_seconds", 60),
+        )
+    except (KeyError, TypeError) as error:
+        raise ValueError("Invalid add-on source configuration") from error

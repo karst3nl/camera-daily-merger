@@ -1,7 +1,7 @@
 # Camera Daily Merger — Project Specification
 
 **Specification version:** 1.3  
-**Status:** Alpha development; Phase 0 complete, Phase 1 synthetic validation complete
+**Status:** Alpha development; Phases 0–6 synthetic validation complete, real acceptance pending
 **License:** MIT (see [LICENSE](../LICENSE))  
 **Project:** https://github.com/karst3nl/camera-daily-merger
 

@@ -66,15 +66,20 @@ real NAS testing. Store this configuration only locally under /data.
 
 ## Automatic processing and backfill
 
-After installing alpha, create `/data/discovery.json` using the explicit source
-adapter configuration above and restart. Without that file the service reports
+After installing alpha, enter source settings in the Home Assistant app Configuration
+tab and restart. Set cameras to a list of `{id: camera_a, path: synthetic_input}`
+mappings and timestamp_pattern to the verified adapter regex. The empty defaults
+leave processing disabled. Advanced local users may instead provide
+`/data/discovery.json` with the explicit JSON adapter above; that file overrides
+source options, so remove that override before relying on the Configuration tab. Without complete source settings the service reports
 processing disabled; once configured, automatic scheduling is enabled. The worker
 runs one merge at a time. At 00:15 in the configured zone it considers the previous
 calendar day. Startup recovers interrupted jobs and up to seven completed days;
 reconciliation runs every six hours and also revisits due failed jobs. These are
 bounded recovery defaults, not unlimited automatic historical backfill.
 
-Optional `/data/schedule.json`:
+Set reconcile_seconds/backfill_days in the Configuration tab. Optional advanced
+`/data/schedule.json` overrides those two option values:
 
 ```json
 {"reconcile_seconds": 21600, "backfill_days": 7}
@@ -122,3 +127,24 @@ Keep that mode disabled in the add-on. Browser gate:
 .venv/bin/python -m pip install '.[dev,browser]'
 .venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium
 ```
+
+Example Configuration tab YAML for **synthetic naming only**, to be replaced by
+a verified adapter after inspecting owner-provided anonymized filename patterns:
+
+```yaml
+source_root: /media/reolink
+cameras:
+  - id: camera_a
+    path: synthetic_input
+timestamp_pattern: '(?P<start>.+)\.mp4'
+timezone: Europe/Berlin
+output: daily
+staging: .staging
+minimum_age_seconds: 60
+reconcile_seconds: 21600
+backfill_days: 7
+```
+
+The backfill CLI also accepts `--config /data/options.json` for normal add-on
+options, provided source settings are complete. Do not configure credentials here;
+network-storage credentials belong to Home Assistant's storage setup.

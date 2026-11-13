@@ -278,3 +278,11 @@ restart. Added large-stderr and stale-marker regressions. Command
 `.venv/bin/python -m pytest`: **61 passed, 0 failed**. Ruff checks and the rebuilt
 native container pipeline passed. GitHub CI for Phase 6 commit 6ef2ca1 was observed
 completed/success (run 43515122368). These checks do not change hardware limitations.
+
+Phase 6 usability follow-up: added standard Home Assistant options/schema for
+source root, camera mappings, timestamp adapter, zone, output/staging and schedule.
+Empty mappings/adapter keep processing disabled. Advanced /data/discovery.json
+remains an explicit source override. Alpha add-on version is 0.1.0-alpha.2.
+62 tests passed plus current add-on linter; the native container pipeline now
+uses options.json and passed automatic processing/restart/source-preservation.
+Added v1-to-v2 migration preservation coverage before the final complete run.

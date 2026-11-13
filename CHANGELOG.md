@@ -32,3 +32,5 @@
 - Include MIT and third-party notices in the add-on build context/image.
 - Robustness: discard unused media stderr, bound probe stream metadata, and avoid
   persistent startup-check markers blocking crash recovery.
+- Alpha.2: source mappings, adapter and schedule settings are available in the
+  Home Assistant Configuration tab; empty defaults safely disable processing.

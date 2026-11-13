@@ -168,3 +168,19 @@ def test_dry_run_cli(tmp_path):
     )
     assert json.loads(result.stdout)["type"] == "Clip"
     assert not (tmp_path / "daily").exists()
+
+
+def test_addon_options_require_explicit_sources(tmp_path):
+    from camera_daily_merger.app.settings import from_addon_options
+
+    assert from_addon_options({}) is None
+    assert from_addon_options({"cameras": [], "timestamp_pattern": ""}) is None
+    options = {
+        "source_root": str(tmp_path),
+        "cameras": [{"id": "a", "path": "input"}],
+        "timestamp_pattern": PATTERN,
+    }
+    assert from_addon_options(options).cameras == {"a": "input"}
+    options["cameras"].append({"id": "a", "path": "other"})
+    with pytest.raises(ValueError, match="Duplicate"):
+        from_addon_options(options)

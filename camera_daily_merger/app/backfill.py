@@ -7,11 +7,16 @@ from pathlib import Path
 
 from .persistence import Store
 from .scheduler import Scheduler
-from .settings import Settings
+from .settings import Settings, from_addon_options
 
 
 def load_settings(path: Path) -> Settings:
     values = json.loads(path.read_text())
+    if "source_root" in values:
+        settings = from_addon_options(values)
+        if settings is None:
+            raise ValueError("Source configuration is incomplete")
+        return settings
     values["root"] = Path(values["root"])
     return Settings(**values)
 

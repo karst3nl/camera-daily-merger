@@ -16,6 +16,7 @@ from .jobs import run_one, worker_lock
 from .persistence import Store
 from .scheduler import Schedule, Scheduler
 from .web import serve
+from .settings import from_addon_options
 
 
 def validate_storage(data: Path, media: Path) -> None:
@@ -55,7 +56,11 @@ def run(data: Path, media: Path, stop: threading.Event) -> None:
         if stop.is_set():
             return
         config = Path(os.environ.get("MERGER_CONFIG", str(data / "discovery.json")))
-        settings = load_settings(config) if config.exists() else None
+        options_path = data / "options.json"
+        options = json.loads(options_path.read_text()) if options_path.exists() else {}
+        settings = (
+            load_settings(config) if config.exists() else from_addon_options(options)
+        )
         if settings and not settings.root.is_relative_to(media):
             raise ValueError("Configured source root must be within media mount")
         store = Store(data / "jobs.sqlite")
@@ -77,6 +82,11 @@ def run(data: Path, media: Path, stop: threading.Event) -> None:
             values = (
                 json.loads(schedule_path.read_text()) if schedule_path.exists() else {}
             )
+            values = {
+                key: options[key]
+                for key in ("reconcile_seconds", "backfill_days")
+                if key in options
+            } | values
             schedule = Schedule(
                 reconcile_seconds=int(
                     os.environ.get(
