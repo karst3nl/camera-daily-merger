@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools==75.8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "camera-daily-merger"
+version = "0.1.0a0"
+description = "Lossless daily camera recording merger for Home Assistant"
+requires-python = ">=3.12"
+license = {file = "LICENSE"}
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "ruff==0.11.0", "build==1.2.2.post1"]
+
+[tool.setuptools.packages.find]
+include = ["camera_daily_merger*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
