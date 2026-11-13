@@ -23,3 +23,20 @@ until Phase 6. A pinned Python Alpine image replaces a Home Assistant base image
 because no bashio/Supervisor API integration is needed yet. Docker init handles
 process reaping; Python handles shutdown. Only aarch64 is declared. An auxiliary
 amd64 build is for development validation only. No FFmpeg is bundled yet.
+
+Phase 2 uses explicitly mapped camera folders and a regex adapter with a named
+start group containing ISO-8601 timestamps. A parser protocol permits future
+verified source adapters. Offset timestamps are converted into the configured
+zone; naive timestamps use round-trip fold validation and reject DST gaps and
+repeated hours. Sorting uses UTC, with relative path as a deterministic tie-break.
+No inference from filesystem mtime is used for recording time.
+
+Directory traversal uses descriptor-relative O_NOFOLLOW opens, including every
+root component. Sources are opened read-only, nonblocking and must be regular,
+single-link files. Output/staging subtrees are excluded. File size/mtime/device/
+inode are captured and compared before/after timestamp extraction; recent/empty
+files are excluded. This is an eligibility snapshot, not a guarantee that NAS
+writers will never append later. Every future media-processing stage must reopen
+and verify the snapshot and must reject changes before publishing. Directory
+iteration is incremental; sorting is explicit and should be scoped to a day.
+The dry-run is a local administrative CLI and reports relative source paths.

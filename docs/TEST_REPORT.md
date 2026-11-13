@@ -106,3 +106,35 @@ Results: 4 Python tests PASS, linter PASS, ARM64-emulated and AMD64-native
 health/restart/shutdown/source-preservation checks PASS. Actual HA OS/NAS remains
 NOT RUN / BLOCKED as explicitly permitted by the Phase 1 gate. No current
 software gate failures. Proceed to Phase 2 with synthetic fixtures only.
+
+## Phase 2 — Storage discovery and timestamping (2026-11-13)
+
+Implemented configuration, parser protocol/ISO regex adapter, descriptor-relative
+read-only source traversal, stable snapshots and JSON-lines dry-run. Original
+media is not written. Reolink parsing remains UNVERIFIED; only synthetic naming
+is supported by the tests. Snapshot checks cannot predict future NAS appends.
+
+Commands:
+
+```sh
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+docker --host=unix:///var/run/docker.sock build --platform linux/arm64 -t camera-daily-merger:alpha-arm64 camera_daily_merger
+docker --host=unix:///var/run/docker.sock build --platform linux/amd64 -t camera-daily-merger:test-amd64 camera_daily_merger
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:alpha-arm64 --qemu work/qemu-aarch64-static
+.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:test-amd64
+.venv/bin/python work/scan.py
+git diff --check
+```
+
+Results: 25 tests passed, 0 failed (21 discovery/time/security tests plus 4
+existing tests). Both images built; emulated ARM64/native AMD64 health, restart,
+shutdown and original preservation passed. Lint/format/package/dependency checks
+passed. Synthetic tests cover nested/unsorted/duplicate names, malformed timestamps,
+source link escapes, traversal, output/staging exclusion, recent/empty/growing
+files, midnight conversion and DST gaps/repeated hours. An unused test import
+was fixed before tests. Actual HA OS/NAS NOT RUN. Gate passed for mock inputs;
+next Phase 3 probing and stream-copy concatenation.

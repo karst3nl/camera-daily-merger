@@ -35,3 +35,30 @@ installation remain separate acceptance checks.
 The current add-on linter and ARM64-emulated startup tests pass. Native Pi 4 and
 Home Assistant OS installation are still unverified. Configuration omits default
 startup/boot/init/options/schema values as required by the current linter.
+
+## Synthetic discovery dry-run
+
+Create a local JSON configuration (do not commit deployment-specific paths):
+
+```json
+{
+  "root": "/media/reolink",
+  "cameras": {"camera_a": "synthetic_input"},
+  "timestamp_pattern": "(?P<start>.+)\\.mp4",
+  "timezone": "Europe/Berlin",
+  "output": "daily",
+  "staging": ".staging",
+  "minimum_age_seconds": 60
+}
+```
+
+Run `python -m camera_daily_merger.app.discover /path/to/config.json` in the
+checkout, or `python -m app.discover /data/discovery.json` inside the add-on.
+Output is JSON lines with eligible Clip snapshots and rejection Diagnostics;
+this command never creates output directories or writes media. Synthetic example
+filename: 2026-11-12T12:00:00+01:00.mp4 (the file need not contain actual video
+until probe/merge testing). This adapter is NOT a verified Reolink convention.
+Use explicit offsets for repeated DST hours; naive ambiguous/gap times fail.
+Camera mappings must not overlap. Symlinks/hardlinks are rejected. File age and
+snapshot checks reduce incomplete input risk; actual writer behavior requires
+real NAS testing. Store this configuration only locally under /data.

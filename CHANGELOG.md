@@ -10,3 +10,7 @@
 - ARM64 execution and full Supervisor validation remain outstanding.
 - Phase 1 gate completed: current add-on schema lint and emulated ARM64 service
   checks pass; added reusable native/emulated container validation and CI checks.
+- Phase 2: explicit source mappings, configurable ISO timestamp adapter, safe
+  read-only discovery snapshots, output/staging exclusion and JSON-lines dry-run.
+- Added synthetic traversal/link/growing-file/midnight/DST tests; Reolink layout
+  and timestamp semantics remain unverified.
