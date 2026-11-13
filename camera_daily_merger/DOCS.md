@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.3 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.4 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -191,3 +191,19 @@ treats it literally and uses folder mappings for camera identity. The example
 alone does not prove timezone or stream compatibility.
 Offset-free repeated DST hours remain rejected. `timestamp_format: iso8601` keeps
 the original ISO adapter behavior; date-only values are rejected.
+
+## Startup configuration errors
+
+Camera `path` is relative to `source_root`. For source_root `/media/NAS_SHARE`
+and a folder `/media/NAS_SHARE/CameraA`, use `id: cameraa` and `path: CameraA`.
+An absolute camera path is rejected. Match the actual folder's capitalization;
+the logical ID may use a different case. After saving options, restart the app.
+Alpha.4 reports this constraint explicitly instead of the earlier generic startup
+failure. Regex, JSON, timezone, mount/OS and database failures also get safe
+category-level diagnostics; raw configuration and paths are not printed.
+
+Alpha.4 scanner codes distinguish `source_directory_not_found` (check relative
+folder spelling/case), `source_directory_permission_denied` (read permissions),
+`source_directory_not_directory_or_symlink` and `source_directory_io_error`.
+The same directory problem may appear for every date in the recovery window;
+this does not establish that seven separate date folders are missing.

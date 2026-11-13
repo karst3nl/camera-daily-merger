@@ -115,7 +115,7 @@ def test_root_and_intermediate_symlink_rejected(tmp_path):
     recording(tmp_path)
     (tmp_path / "alias").symlink_to(tmp_path / "input", target_is_directory=True)
     config = Settings(root=tmp_path, cameras={"a": "alias"}, timestamp_pattern=PATTERN)
-    assert list(scan(config))[0].reason == "unreadable_or_unsafe_directory"
+    assert list(scan(config))[0].reason == "source_directory_not_directory_or_symlink"
     with pytest.raises(OSError), directory(tmp_path / "alias"):
         pass
 
@@ -232,3 +232,38 @@ def test_compact_adapter_maps_two_camera_folders(tmp_path):
     )
     results = chronological([x for x in scan(config) if isinstance(x, Clip)])
     assert [(x.camera, x.start.hour) for x in results] == [("a", 12), ("b", 13)]
+
+
+def test_camera_id_can_differ_from_case_sensitive_source_folder(tmp_path):
+    recording(tmp_path, "CameraA_00_20260101120000.mp4", folder="CameraA/2026/01/01")
+    config = Settings(
+        root=tmp_path,
+        cameras={"cameraa": "CameraA"},
+        timestamp_pattern=r".+_00_(?P<start>\d{14})\.mp4",
+        timestamp_format="%Y%m%d%H%M%S",
+    )
+    result = list(scan(config))
+    assert len(result) == 1 and isinstance(result[0], Clip)
+    assert result[0].camera == "cameraa"
+
+
+def test_missing_camera_directory_has_specific_diagnostic(tmp_path):
+    result = list(scan(settings(tmp_path)))
+    assert len(result) == 1
+    assert result[0].reason == "source_directory_not_found"
+
+
+def test_permission_denial_has_specific_directory_diagnostic(tmp_path, monkeypatch):
+    from camera_daily_merger.app import scanner
+    from contextlib import contextmanager
+    import errno
+
+    @contextmanager
+    def denied(*args, **kwargs):
+        raise PermissionError(errno.EACCES, "private-path-must-not-be-exposed")
+        yield
+
+    monkeypatch.setattr(scanner, "open_relative", denied)
+    result = list(scan(settings(tmp_path)))
+    assert result[0].reason == "source_directory_permission_denied"
+    assert "private-path" not in result[0].reason

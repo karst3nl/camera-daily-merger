@@ -347,3 +347,34 @@ all unused Docker build cache; free space increased to 5.8 GiB. Source/config/NA
 content was untouched. The final ARM build/smoke and package checks were rerun
 successfully after cleanup. This development-host storage event is not a NAS
 fault-injection success and is not counted as a passing device test.
+
+## Phase 7 owner feedback — startup diagnostics (alpha.4)
+
+Owner reports successful installation and initial UI opening. Configured startup
+then failed with a generic validation error. The supplied configuration used an
+absolute camera path; camera mappings require paths relative to source_root.
+Actual names/paths are not copied into tracked tests or documentation. Correcting
+the relative path and matching folder capitalization is the user-side remedy;
+its success on the device is not yet confirmed. Full real acceptance stays blocked.
+
+Added controlled ConfigurationError messages, category-only regex/JSON/timezone/
+OS/database diagnostics, and no raw exception/configuration path logging. Synthetic
+regressions reproduce absolute-path startup failure, verify the actionable message
+without private values, reject malformed regex without logging its contents, and
+support logical camera IDs differing from case-sensitive source folder names.
+
+Commands: `.venv/bin/ruff format .`, `.venv/bin/ruff check .`,
+`.venv/bin/ruff format --check .`, `.venv/bin/python -m pytest`,
+`.venv/bin/python -m build`, `.venv/bin/python -m pip check`,
+`.venv/bin/python work/scan.py`, `git diff --check`.
+Results: 74 tests passed, 0 failed. Device restart after correction NOT RUN.
+
+Further owner feedback: configured startup now succeeds, but discovery reports
+the same generic directory error for the recovery window. The owner confirmed a
+lowercase relative folder value differing from the original supplied folder's
+capitalization; advised matching the actual folder name. Actual corrected scan
+success remains unconfirmed. Added missing/permission/not-directory-or-link/I/O
+scanner categories. Tests use synthetic names and simulated permission denial.
+Final full-suite result: 76 passed, 0 failed. Native compact-name container pipeline
+passed before this classification-only scanner change; no media write behavior
+was changed. Real-device full acceptance remains blocked.

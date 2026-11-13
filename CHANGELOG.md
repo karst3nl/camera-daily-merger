@@ -46,3 +46,8 @@
   due failed historical jobs. Full metadata-preserving bit-rot audit is separate.
 - Alpha.3 includes the compact filename adapter candidate and output integrity
   cache; real-device acceptance remains blocked.
+- Alpha.4: actionable startup configuration diagnostics for absolute camera paths,
+  invalid regex/JSON/timezone and mount failures, without logging private values.
+- Clarified relative, case-sensitive camera folder paths versus logical camera IDs.
+- Scanner diagnostics now distinguish missing folders, permission denial, unsafe
+  directory/link paths and NAS I/O errors without exposing raw exception paths.

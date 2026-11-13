@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import os
+import errno
 from pathlib import PurePosixPath
 import stat
 import time
@@ -102,8 +103,19 @@ def scan(
                                     )
                         except (OSError, ValueError):
                             yield Diagnostic(camera, relative, "unreadable_or_unsafe")
-        except (OSError, ValueError):
-            yield Diagnostic(camera, path, "unreadable_or_unsafe_directory")
+        except OSError as error:
+            reason = {
+                errno.ENOENT: "source_directory_not_found",
+                errno.EACCES: "source_directory_permission_denied",
+                errno.EPERM: "source_directory_permission_denied",
+                errno.ENOTDIR: "source_directory_not_directory_or_symlink",
+                errno.ELOOP: "source_directory_symlink_rejected",
+                errno.EIO: "source_directory_io_error",
+                errno.ESTALE: "source_directory_io_error",
+            }.get(error.errno, "unreadable_or_unsafe_directory")
+            yield Diagnostic(camera, path, reason)
+        except ValueError:
+            yield Diagnostic(camera, path, "source_directory_invalid_path")
 
     with directory(settings.root) as root_fd:
         for camera, path in settings.cameras.items():

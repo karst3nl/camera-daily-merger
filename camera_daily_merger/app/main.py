@@ -7,6 +7,9 @@ import json
 import os
 from pathlib import Path
 import signal
+import re
+import sqlite3
+from zoneinfo import ZoneInfoNotFoundError
 import threading
 import tempfile
 import time
@@ -16,12 +19,14 @@ from .jobs import run_one, worker_lock
 from .persistence import Store
 from .scheduler import Schedule, Scheduler
 from .web import serve
-from .settings import from_addon_options
+from .settings import ConfigurationError, from_addon_options
 
 
 def validate_storage(data: Path, media: Path) -> None:
-    if not data.is_dir() or not media.is_dir():
-        raise ValueError("Required data/media mount is unavailable")
+    if not data.is_dir():
+        raise ConfigurationError("Persistent data directory is unavailable")
+    if not media.is_dir():
+        raise ConfigurationError("Media mount is unavailable")
     # Anonymous state-only writeability check cannot leave a blocking startup marker.
     with tempfile.TemporaryFile(dir=data):
         pass
@@ -62,7 +67,7 @@ def run(data: Path, media: Path, stop: threading.Event) -> None:
             load_settings(config) if config.exists() else from_addon_options(options)
         )
         if settings and not settings.root.is_relative_to(media):
-            raise ValueError("Configured source root must be within media mount")
+            raise ConfigurationError("source_root must be within the media mount")
         store = Store(data / "jobs.sqlite")
         development = os.environ.get("MERGER_DEVELOPMENT") == "1"
         with serve(
@@ -145,8 +150,32 @@ def main() -> int:
         signal.signal(sig, lambda *_: stop.set())
     try:
         run(data, media, stop)
-    except (OSError, ValueError):
-        logging.error("Startup/storage validation failed")
+    except ConfigurationError as error:
+        logging.error("Configuration validation failed: %s", error)
+        return 1
+    except ZoneInfoNotFoundError:
+        logging.error("Configuration validation failed: unknown timezone")
+        return 1
+    except re.error:
+        logging.error(
+            "Configuration validation failed: invalid timestamp_pattern regex"
+        )
+        return 1
+    except json.JSONDecodeError:
+        logging.error("Configuration validation failed: invalid JSON configuration")
+        return 1
+    except OSError as error:
+        import errno
+
+        logging.error(
+            "Storage/service startup failed (%s); check mounts, permissions and listener",
+            errno.errorcode.get(error.errno, "OS_ERROR"),
+        )
+        return 1
+    except (ValueError, TypeError, KeyError, sqlite3.Error):
+        logging.error(
+            "Startup validation failed; check configuration types, schedule and state database"
+        )
         return 1
     return 0
 
