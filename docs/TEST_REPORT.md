@@ -69,3 +69,7 @@ No subsequent phases started. No original recordings were used or changed.
 
 Next: validate metadata with Supervisor tooling and run the ARM64 container on
 an ARM64-capable environment; then finish Phase 1 and proceed to Phase 2.
+
+Post-review: git diff --check caught trailing Markdown whitespace on the updated
+specification status line. Removed it and reran git diff --check successfully;
+this documentation-only correction is recorded in a follow-up commit.
