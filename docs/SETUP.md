@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.6 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.7 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -235,3 +235,19 @@ be ordered reliably, but its recording date is still known. It blocks that date,
 not every requested historical day. No offset is guessed and no original is
 changed. Truly unparseable filenames with unknown dates still block the requested
 camera dates. After upgrading, restart and reprocess to refresh old diagnostics.
+
+## Incompatible stream diagnostics
+
+Alpha.7 adds comparison lines to failed job history. Upgrade, restart, reprocess
+and refresh history after the worker finishes. Each line identifies a one-based
+chronological clip number versus reference clip 1, a zero-based stream index
+(or layout), the field and the two values. Examples include width/height, codec,
+frame rate, timebase, audio layout and codec-header hash. A mismatch reports up to
+12 fields from the first incompatible clip; absence is shown explicitly.
+
+The message alone does not establish whether the recordings require conversion
+or whether a future verified remux policy can handle a particular difference.
+The current exact compatibility rules still reject the mismatch, perform no
+transcoding, publish no failed output and retain any previous current export.
+Share only non-sensitive comparison values when requesting help; no recordings
+or full ffprobe dumps are needed for this diagnostic step.

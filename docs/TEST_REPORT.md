@@ -461,3 +461,44 @@ Native image build and `.venv/bin/python tests/integration/check_pipeline.py
 container automatically merged its valid recent synthetic day despite an archived
 ambiguous-hour clip, preserved both source hashes, restarted without rebuilding,
 and shut down cleanly. The archived-DST variant is included in hosted CI.
+
+## Phase 7 owner feedback — stream compatibility diagnostics (alpha.7)
+
+The owner's requested day now reaches the media compatibility gate and fails with
+“Incompatible streams; no transcoding performed”. The specific real codec/stream
+difference is not yet known. The current exact signature comparison remains in
+force; no automatic conversion, field ignoring or source mutation was added.
+
+Added controlled field/value differences for the first incompatible chronological
+clip, bounded to 12 rows and 40 printable characters per value. Persisted alongside
+the token-fenced job result in existing SQLite metadata; cleared on accepted retry.
+Authenticated job history shows the comparisons without source names/paths, tags
+or raw codec headers. Previous successful output is preserved on incompatibility.
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+.venv/bin/python work/scan.py
+git diff --check
+```
+
+Results: 87 tests passed, 0 failed. New tests exercise real synthetic resolution
+mismatch with durable field differences, unchanged source hashes and preserved
+previous output, stale-detail clearing on retry, authenticated API disclosure
+without source paths, frame-rate/layout comparison and bounded control-character
+handling. Browser checks passed, including rendering a real synthetic failed job's
+width comparison after refresh without exposing its local path or JS errors.
+Actual owner-side comparison values and successful real-day export remain NOT RUN /
+BLOCKED pending reprocessing with the improved diagnostics.
+
+Native image build and `.venv/bin/python tests/integration/check_pipeline.py
+--image camera-daily-merger:test-amd64 --compact --archived-dst` also passed,
+covering scheduled compatible processing, archived DST isolation, source hashes,
+restart idempotency and graceful shutdown with the extended metadata query.

@@ -77,6 +77,15 @@ def main():
             assert page.evaluate(
                 "document.documentElement.scrollWidth <= window.innerWidth"
             )
+            pending = store.claim(0)
+            store.finish(pending, 0, error="synthetic retry setup")
+            make_clip(root, 12, size="128x64")
+            enqueue(store, settings, "a", DAY, clips(root), force=True)
+            with worker_lock(data):
+                run_one(store, settings, data, threading.Event())
+            page.get_by_role("button", name="Refresh", exact=True).click()
+            expect(page.locator("#jobs")).to_contain_text("width: 128 vs 64")
+            assert str(root) not in page.locator("#jobs").inner_text()
             assert not errors, errors
             browser.close()
             print(

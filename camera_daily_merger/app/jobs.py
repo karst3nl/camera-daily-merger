@@ -112,7 +112,10 @@ def run_one(
         )
     except MediaError as error:
         store.finish(
-            job, time.time() if fixed_now is None else now, error=str(error)[:200]
+            job,
+            time.time() if fixed_now is None else now,
+            error=str(error)[:200],
+            details=error.details,
         )
     except (OSError, ValueError):
         store.finish(

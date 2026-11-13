@@ -130,3 +130,14 @@ it also preserves it when reparsing an unsettled-file diagnostic. A known date
 can scope failure even when the absolute instant is ambiguous or nonexistent.
 This changes neither DST disambiguation policy nor the fail-closed behavior for
 filenames whose calendar date cannot be established.
+
+MediaError may carry at most 12 comparison records from the first incompatible
+chronological input, with stream/clip indices, allowlisted field names and bounded
+printable values (40 characters each). These are derived only from selected probe
+fields, not filenames, tags or raw codec headers. Job completion stores them in
+the existing metadata table within the same token-fenced SQLite transaction as
+the failed state. A keyed scalar lookup includes them in the bounded job-summary
+query without loading manifests or making one DB connection per result. Accepted
+retries clear stale comparisons. Only authenticated job responses expose the
+structured records; the frontend uses textContent. No schema migration or media
+compatibility relaxation is introduced.

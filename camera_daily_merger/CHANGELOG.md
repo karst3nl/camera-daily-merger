@@ -58,3 +58,6 @@
 - Alpha.6: retain the known local recording date when rejecting an ambiguous or
   nonexistent DST time, so archival transition-day clips cannot block unrelated
   dates. The affected DST day still fails closed without guessing an offset.
+- Alpha.7: incompatible-stream failures identify the first differing chronological
+  clip and show bounded field/value comparisons in job history. The conservative
+  compatibility policy and no-transcoding behavior remain unchanged.

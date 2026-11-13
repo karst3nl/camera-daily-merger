@@ -144,3 +144,41 @@ def test_output_integrity_cache_bounds_unchanged_nas_reads(tmp_path, monkeypatch
     content[0] ^= 1
     path.write_bytes(content)
     assert not output_healthy(settings, store.get("a", str(DAY)), store=store)
+
+
+def test_incompatible_job_retains_field_details_and_previous_output(tmp_path):
+    make_clip(tmp_path, 10)
+    data = tmp_path / "data"
+    data.mkdir()
+    settings = config(tmp_path)
+    store = Store(data / "jobs.sqlite")
+    with worker_lock(data):
+        enqueue(store, settings, "a", DAY, clips(tmp_path))
+        run_one(store, settings, data, threading.Event())
+        old_output = store.get("a", str(DAY))["output"]
+        make_clip(tmp_path, 12, size="128x64")
+        from tests.integration.test_merge import hashes
+
+        originals = list((tmp_path / "input").iterdir())
+        before = hashes(originals)
+        enqueue(store, settings, "a", DAY, clips(tmp_path))
+        run_one(store, settings, data, threading.Event())
+        row = Store(store.path).list()[0]
+        assert row["status"] == "failed"
+        assert "clip 2 vs 1" in row["error"]
+        details = json.loads(row["error_details"])
+        width = next(d for d in details if d["field"] == "width")
+        assert width == {
+            "stream": 0,
+            "field": "width",
+            "expected": "64",
+            "actual": "128",
+            "reference_clip": 1,
+            "clip": 2,
+        }
+        assert len(details) <= 12
+        assert row["output"] == old_output
+        assert hashes(originals) == before
+        assert output_healthy(settings, row)
+        enqueue(store, settings, "a", DAY, clips(tmp_path), force=True)
+        assert store.list()[0]["error_details"] is None

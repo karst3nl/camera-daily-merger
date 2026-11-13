@@ -9,7 +9,7 @@ import tempfile
 import threading
 import uuid
 
-from .probe import MediaError, execute, probe
+from .probe import MediaError, compatibility_differences, execute, probe
 from .scanner import Clip, chronological, signature
 from .settings import Settings
 from .storage import directory, open_relative, writable_directory
@@ -77,8 +77,19 @@ def merge(
 
         unchanged()
         probes = [probe(source, cancel=cancel) for source in sources]
-        if any(item.streams != probes[0].streams for item in probes[1:]):
-            raise MediaError("Incompatible streams; no transcoding performed")
+        for index, candidate in enumerate(probes[1:], start=2):
+            differences = compatibility_differences(probes[0], candidate)
+            if differences:
+                fields = ", ".join(
+                    dict.fromkeys(item["field"] for item in differences)
+                )[:90]
+                details = [
+                    {**item, "reference_clip": 1, "clip": index} for item in differences
+                ]
+                raise MediaError(
+                    f"Incompatible streams: clip {index} vs 1 ({fields}); no transcoding performed",
+                    details=details,
+                )
         staging = stack.enter_context(writable_directory(root, settings.staging))
         destination = stack.enter_context(
             writable_directory(root, f"{settings.output}/{camera}")

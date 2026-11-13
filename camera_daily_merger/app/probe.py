@@ -9,7 +9,9 @@ import time
 
 
 class MediaError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, details: list[dict] | None = None):
+        super().__init__(message)
+        self.details = details or []
 
 
 def execute(
@@ -118,3 +120,43 @@ def probe(descriptor: int, *, cancel=None) -> Probe:
         )
     except (KeyError, ValueError, TypeError) as error:
         raise MediaError("Unreadable or unsupported MP4 stream layout") from error
+
+
+def compatibility_differences(reference: Probe, candidate: Probe) -> list[dict]:
+    """Bounded field comparisons; no filenames, tags or raw codec headers."""
+
+    def display(value):
+        if value is None:
+            return "absent"
+        if not isinstance(value, (str, int, float)):
+            return "unavailable"
+        return "".join(
+            c if c.isascii() and c.isprintable() else "?" for c in str(value)
+        )[:40]
+
+    if len(reference.streams) != len(candidate.streams):
+        return [
+            {
+                "stream": "layout",
+                "field": "stream_count",
+                "expected": str(len(reference.streams)),
+                "actual": str(len(candidate.streams)),
+            }
+        ]
+    changes = []
+    for stream_index, (expected, actual) in enumerate(
+        zip(reference.streams, candidate.streams, strict=True)
+    ):
+        for field, left, right in zip(FIELDS, expected, actual, strict=True):
+            if left != right:
+                changes.append(
+                    {
+                        "stream": stream_index,
+                        "field": field,
+                        "expected": display(left),
+                        "actual": display(right),
+                    }
+                )
+                if len(changes) == 12:
+                    return changes
+    return changes

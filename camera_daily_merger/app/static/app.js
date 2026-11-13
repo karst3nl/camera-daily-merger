@@ -31,7 +31,13 @@ async function refresh() {
     name.textContent=`${job.camera} · ${job.day}`;
     detail.textContent=job.error || `${job.attempts} processing attempt${job.attempts===1?'':'s'}`;
     state.className=`state ${job.status==='failed'?'failed':''}`; state.textContent=job.status;
-    info.append(name,detail); row.append(info,state);return row;
+    info.append(name,detail);
+    for (const difference of job.details || []) {
+      const line=document.createElement('small');
+      line.textContent=`Clip ${difference.clip} vs ${difference.reference_clip}, stream ${difference.stream} · ${difference.field}: ${difference.actual} vs ${difference.expected}`;
+      info.append(line);
+    }
+    row.append(info,state);return row;
   }));
   if (!jobs.length) {const p=document.createElement('p');p.textContent='No processing history yet.';el('jobs').append(p);}
 }

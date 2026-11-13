@@ -78,7 +78,7 @@ class Store:
             return [
                 dict(row)
                 for row in db.execute(
-                    "SELECT camera,day,status,attempts,next_retry,error,output,output_fingerprint,fingerprint FROM jobs ORDER BY day DESC,camera LIMIT 1000"
+                    "SELECT camera,day,status,attempts,next_retry,error,output,output_fingerprint,fingerprint, (SELECT value FROM metadata WHERE key='media_diagnostics:' || jobs.camera || ':' || jobs.day) AS error_details FROM jobs ORDER BY day DESC,camera LIMIT 1000"
                 )
             ]
 
@@ -117,6 +117,10 @@ class Store:
                     (camera, day, value, digest),
                 )
             db.execute(
+                "DELETE FROM metadata WHERE key=?",
+                (f"media_diagnostics:{camera}:{day}",),
+            )
+            db.execute(
                 "INSERT INTO history(camera,day,status,timestamp) VALUES(?,?,'queued',?)",
                 (camera, day, now),
             )
@@ -142,7 +146,7 @@ class Store:
                 db.execute("SELECT * FROM jobs WHERE token=?", (token,)).fetchone()
             )
 
-    def finish(self, job, now, *, output=None, error=None):
+    def finish(self, job, now, *, output=None, error=None, details=None):
         with self.transaction() as db:
             row = db.execute(
                 "SELECT * FROM jobs WHERE camera=? AND day=? AND token=? AND status='running'",
@@ -156,6 +160,14 @@ class Store:
                 "UPDATE jobs SET status=?,error=?,next_retry=? WHERE camera=? AND day=?",
                 (status, error, retry, job["camera"], job["day"]),
             )
+            key = f"media_diagnostics:{job['camera']}:{job['day']}"
+            if details:
+                db.execute(
+                    "INSERT INTO metadata(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (key, json.dumps(details[:12])),
+                )
+            else:
+                db.execute("DELETE FROM metadata WHERE key=?", (key,))
             if output:
                 db.execute(
                     "UPDATE jobs SET output=?,output_fingerprint=? WHERE camera=? AND day=?",

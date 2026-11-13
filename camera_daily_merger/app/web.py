@@ -146,7 +146,12 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                                     "error",
                                 )
                             }
-                            | {"has_output": bool(row["output"])}
+                            | {
+                                "has_output": bool(row["output"]),
+                                "details": json.loads(row["error_details"])
+                                if row["status"] == "failed" and row["error_details"]
+                                else [],
+                            }
                         )
                 self.reply(200, rows)
             elif path.startswith("/video/"):

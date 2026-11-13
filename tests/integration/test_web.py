@@ -86,6 +86,7 @@ def test_api_enumeration_csrf_validation_and_manual_run(tmp_path):
             "attempts",
             "error",
             "has_output",
+            "details",
         }
         assert public["camera"] == "a"
         for path in (
@@ -149,3 +150,21 @@ def test_diagnostic_basenames_visible_only_to_authorized_ingress(tmp_path):
         status, body, _ = request(url + "/api/status")
         assert status == 403
         assert filename.encode() not in body
+
+
+def test_failed_media_comparisons_exposed_without_source_paths(tmp_path):
+    make_clip(tmp_path, 10)
+    make_clip(tmp_path, 12, size="128x64")
+    with application(tmp_path) as (url, store, settings, data):
+        enqueue(store, settings, "a", DAY, clips(tmp_path))
+        with worker_lock(data):
+            run_one(store, settings, data, threading.Event())
+        status, body, _ = request(url + "/api/jobs")
+        assert status == 200
+        public = json.loads(body)[0]
+        assert public["status"] == "failed"
+        assert any(
+            d["field"] == "width" and d["actual"] == "128" for d in public["details"]
+        )
+        assert str(tmp_path).encode() not in body
+        assert b"odd '" not in body
