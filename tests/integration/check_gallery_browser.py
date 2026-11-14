@@ -28,7 +28,7 @@ def main():
                 "-f",
                 "lavfi",
                 "-i",
-                "color=blue:size=64x64:rate=10:duration=5",
+                "testsrc2=size=320x180:rate=10:duration=5",
                 "-c:v",
                 "libx264",
                 "-threads",
@@ -83,6 +83,68 @@ def main():
             page.wait_for_function(
                 "() => [...document.querySelectorAll('#gallery-grid video')].every(v=>v.readyState>=2 && !v.paused)"
             )
+            tile = page.locator('.camera-tile[data-camera="a"]')
+            other = page.locator('.camera-tile[data-camera="b"]')
+            assert not tile.locator("video").evaluate("v=>v.controls")
+            assert tile.locator("video").evaluate("v=>v.preload") == "none"
+            assert tile.locator(".tile-meta").count() == 0
+            assert tile.bounding_box()["y"] == other.bounding_box()["y"]
+            viewport = tile.locator(".video-viewport")
+            controls = tile.locator(".video-controls")
+            assert (
+                controls.bounding_box()["y"]
+                >= viewport.bounding_box()["y"] + viewport.bounding_box()["height"]
+            )
+            tile.get_by_role("button", name="a: Pause", exact=True).click()
+            assert tile.locator("video").evaluate("v=>v.paused")
+            seek = tile.get_by_role("slider", name="a: Seek", exact=True)
+            seek.fill("2")
+            page.wait_for_function(
+                "() => document.querySelector('.camera-tile video').currentTime >= 1.9"
+            )
+            for _ in range(6):
+                tile.get_by_role("button", name="a: Zoom in", exact=True).click()
+            expect(
+                tile.get_by_role("button", name="a: Zoom in", exact=True)
+            ).to_be_disabled()
+            expect(
+                tile.get_by_role("button", name="a: Reset zoom", exact=True)
+            ).to_have_text("4×")
+            before = tile.locator("video").evaluate("v=>v.style.transform")
+            box = viewport.bounding_box()
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+            page.mouse.down()
+            page.mouse.move(
+                box["x"] + box["width"] / 2 + 35, box["y"] + box["height"] / 2 + 20
+            )
+            page.mouse.up()
+            assert tile.locator("video").evaluate("v=>v.style.transform") != before
+            assert "scale(4)" in tile.locator("video").evaluate("v=>v.style.transform")
+            tile.get_by_role("button", name="a: Reset zoom", exact=True).click()
+            expect(
+                tile.get_by_role("button", name="a: Reset zoom", exact=True)
+            ).to_have_text("1×")
+            expect(
+                tile.get_by_role("button", name="a: Zoom out", exact=True)
+            ).to_be_disabled()
+            tile.get_by_role("button", name="a: Unmute", exact=True).click()
+            assert not tile.locator("video").evaluate("v=>v.muted")
+            tile.get_by_role("button", name="a: Mute", exact=True).click()
+            tile.get_by_role("button", name="a: Fullscreen", exact=True).click()
+            page.wait_for_function(
+                "() => document.fullscreenElement?.classList.contains('surveillance-player')"
+            )
+            assert (
+                controls.bounding_box()["y"]
+                >= viewport.bounding_box()["y"] + viewport.bounding_box()["height"] - 1
+            )
+            page.evaluate("document.exitFullscreen()")
+            page.wait_for_function("() => !document.fullscreenElement")
+            tile.get_by_role("button", name="a: Play", exact=True).click()
+            page.wait_for_function(
+                "() => !document.querySelector('.camera-tile video').paused"
+            )
+            page.screenshot(path="work/surveillance-playback.png", full_page=True)
             published(store, root, "b", "2026-11-12", body=body, duration=5.0)
             page.evaluate("() => refreshGallery()")
             expect(page.locator("#gallery-message")).to_contain_text(
@@ -105,6 +167,18 @@ def main():
             page.screenshot(path="work/gallery-desktop.png", full_page=True)
             page.set_viewport_size({"width": 390, "height": 844})
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+            mobile_a = page.locator('.camera-tile[data-camera="a"]').bounding_box()
+            mobile_b = page.locator('.camera-tile[data-camera="b"]').bounding_box()
+            assert mobile_a["y"] == mobile_b["y"]
+            assert mobile_b["x"] > mobile_a["x"]
+            for control in page.locator(
+                '.camera-tile[data-camera="a"] .video-controls button'
+            ).all():
+                box = control.bounding_box()
+                assert (
+                    box["x"] >= mobile_a["x"]
+                    and box["x"] + box["width"] <= mobile_a["x"] + mobile_a["width"] + 1
+                )
             page.screenshot(path="work/gallery-mobile.png", full_page=True)
             page.goto(url + "/#view=day&day=2026-11-12&embed=1")
             expect(page.locator("#gallery-grid video")).to_have_count(2)
@@ -182,7 +256,7 @@ def main():
             assert not errors, errors
             browser.close()
             print(
-                "PASS latest per camera, shared day, missing camera, play/pause all, non-disruptive refresh, mobile and embedded views"
+                "PASS latest per camera, shared day, missing camera, play/pause all, non-disruptive refresh, mobile/embedded views, external controls, seeking, audio, fullscreen, zoom and pan"
             )
 
 

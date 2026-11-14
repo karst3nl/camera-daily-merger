@@ -26,3 +26,6 @@ Webpage card in alpha.10. Open **Dashboard setup** for installation-specific URL
 see the [dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md).
 No file copies, custom resources or YAML are required. Existing app access rules
 apply and recordings are streamed directly from existing exports.
+
+Alpha.11 adds a compact surveillance wall with adjacent cameras, name/date labels,
+external playback controls and local digital zoom/pan. No new configuration.

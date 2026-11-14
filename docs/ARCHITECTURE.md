@@ -191,3 +191,12 @@ and renewal; the add-on reads same-origin parent properties through the official
 ingress postMessage protocol and requests kiosk mode only for dashboard routes.
 Validated route prefixes generate installation-specific setup URLs. Repeated
 properties do not reset selected dates. No processing or media copy is required.
+
+## Surveillance playback controls
+
+A dependency-free browser player wraps each gallery video in a clipped viewport.
+Playback/seek/audio/zoom/fullscreen controls are separate siblings below that
+viewport; fullscreen targets the wrapper, never the raw video element. CSS
+transforms implement bounded 1–4× digital zoom and pointer-based pan. No canvas,
+extra video element, server transformation, source write or background animation
+loop is used. Original management playback remains separate.

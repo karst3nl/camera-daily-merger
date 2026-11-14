@@ -658,3 +658,36 @@ The native bridge test mocks the official HA app-panel message interface, not an
 actual HA installation. Native Webpage-card embedding, authentication renewal and
 mobile companion behavior still require owner-device acceptance. ARM hardware and
 real NAS tests were not performed for this UI change. No release or main merge.
+
+## Surveillance dashboard — 0.1.0-alpha.11
+
+Implemented a full-width adjacent camera wall with name/date-only normal metadata.
+Native gallery video controls are disabled; external controls remain below the
+image, including wrapper fullscreen. Added client-side 1–4× zoom/reset and bounded
+pointer pan, preserving existing latest/day/native dashboard views. Management
+playback remains unchanged. No recording copy, re-encoding or source change.
+
+Commands and results (synthetic recordings/temporary NAS only):
+
+- `.venv/bin/ruff check .` and `.venv/bin/ruff format --check .`: passed.
+- `.venv/bin/python -m pytest`: 97 passed, 0 failed.
+- `.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium`:
+  passed original management playback/download/reprocess and mobile regressions.
+- `.venv/bin/python -m tests.integration.check_gallery_browser --chromium /usr/bin/chromium`:
+  passed latest/day/embedded playback and new external control geometry, individual
+  play/pause, seek, audio, fullscreen, 4× limit, pan, reset, no native controls and
+  side-by-side desktop/mobile layout without horizontal overflow. Visually checked
+  synthetic playback and narrow-screen screenshots.
+- `.venv/bin/python -m tests.integration.check_dashboard_card --chromium /usr/bin/chromium`:
+  passed current/legacy authenticated session and dashboard regressions.
+- `.venv/bin/python -m build` and `.venv/bin/python -m pip check`: passed.
+- Native AMD64 image build passed; `.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64 --compact --mixed-rate`:
+  passed automatic merge, restart idempotency, graceful shutdown and source hashes.
+- `.venv/bin/python work/scan.py` and `git diff --check`: passed (heuristic privacy
+  scan; no tracked recordings or credentials). MIT license unchanged.
+
+Not run: actual Home Assistant/Pi/NAS acceptance and physical touchscreen/Safari
+checks. Pointer panning is implemented for mouse and touch; automated drag testing
+used Chromium mouse events. Zoom magnifies existing pixels and cannot recover
+additional detail. Browser fullscreen depends on host iframe/platform permission.
+Phase 7 acceptance remains open; no main merge or production-readiness claim.

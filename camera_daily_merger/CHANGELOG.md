@@ -79,3 +79,10 @@
 - Native Home Assistant Webpage card setup: no copied files, resource or YAML.
 - Stable latest/day links, official ingress properties bridge and compact mode.
 - Existing recording exports stream directly; source recordings stay untouched.
+
+## 0.1.0-alpha.11
+
+- Full-width surveillance grid with adjacent cameras and name/date-only metadata.
+- External playback, seeking and audio controls leave the video image unobscured.
+- Client-side 1–4× digital zoom, reset, mouse/touch pan and wrapper fullscreen.
+- Preserve native dashboard embedding and original recordings without copying.

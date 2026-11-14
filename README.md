@@ -32,7 +32,7 @@ operation remain unverified. This is not a production-ready add-on.
 Project code and documentation use the [MIT license](LICENSE). Third-party
 software retains its own licenses; see [dependency notices](docs/THIRD_PARTY.md).
 
-Current add-on snapshot: **0.1.0-alpha.10**. Install the alpha repository using
+Current add-on snapshot: **0.1.0-alpha.11**. Install the alpha repository using
 `https://github.com/karst3nl/camera-daily-merger#alpha`; see setup for verified
 branch-selector behavior and device-test limitations. Configure sources in the
 Home Assistant Configuration tab; empty defaults do not process media.
@@ -47,3 +47,7 @@ Home Assistant **Webpage** card. Open **Dashboard setup** in the app for stable
 URLs and follow the [dashboard guide](docs/DASHBOARD.md). No file copies, custom
 resources or YAML are required. Home Assistant manages authenticated ingress;
 recordings are streamed directly from existing exports.
+
+Alpha.11 adds an adjacent surveillance camera wall with name/date labels, controls
+below the image and local 1–4× digital zoom/pan. Open the add-on normally; no new
+configuration is needed. See the [dashboard guide](docs/DASHBOARD.md).

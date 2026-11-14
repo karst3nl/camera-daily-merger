@@ -70,13 +70,13 @@ function galleryQuery(){const query=new URLSearchParams({view:galleryView});if(g
 function selectView(view,day=null,writeHash=true){
   stopGallery();galleryView=['latest','day','manage'].includes(view)?view:'latest';
   if(embedded && galleryView==='manage')galleryView='latest';
+  document.body.classList.toggle('surveillance',galleryView!=='manage');
   galleryDay=day;gallerySignature=null;pendingGallery=false;galleryRevision++;
   el('management').hidden=galleryView!=='manage';el('gallery-panel').hidden=galleryView==='manage';
   for(const mode of ['latest','day','manage'])el(`view-${mode}`).setAttribute('aria-pressed',String(galleryView===mode));
   if(writeHash){const hash=new URLSearchParams({view:galleryView});if(embedded)hash.set('embed','1');if(galleryDay)hash.set('day',galleryDay);history.replaceState(null,'','#'+hash);}
   if(galleryView!=='manage')refreshGallery(true);
 }
-function durationLabel(value){const total=Math.round(value);return `${Math.floor(total/60)} min ${String(total%60).padStart(2,'0')} sec`;}
 function renderCollection(data){
   stopGallery();el('gallery-grid').replaceChildren();
   el('gallery-title').textContent=galleryView==='latest'?'Latest per camera':`All cameras · ${data.day || 'select a date'}`;
@@ -96,14 +96,17 @@ function renderCollection(data){
     tile.append(title,day);
     if(item.available){
       available++;
-      const video=document.createElement('video');video.controls=true;video.preload='none';video.muted=true;video.playsInline=true;video.src=item.video_url;video.setAttribute('aria-label',`${item.camera} · ${item.day}`);
+      const video=document.createElement('video');video.controls=false;video.disablePictureInPicture=true;video.preload='none';video.muted=true;video.playsInline=true;video.src=item.video_url;video.setAttribute('aria-label',`${item.camera} · ${item.day}`);
       const warning=document.createElement('p');warning.className='tile-warning';warning.hidden=true;warning.textContent='Playback unavailable. H.265 support varies; try a compatible player or refresh if the export changed.';
       video.addEventListener('error',()=>warning.hidden=false);
-      const metadata=document.createElement('p');metadata.className='tile-meta';metadata.textContent=durationLabel(item.duration)+(item.previous_export?' · Previous successful export; current job '+item.job_status:'');
+      const player=createSurveillancePlayer(video,item.camera);
+      player.addEventListener('playback-error',()=>warning.hidden=false);
       const links=document.createElement('div');links.className='tile-links';
-      const download=document.createElement('a');download.href=item.download_url;download.textContent='Download MP4';download.setAttribute('download','');links.append(download);
-      if(galleryView==='latest'){const together=document.createElement('button');together.className='secondary';together.textContent='All cameras on this day';together.addEventListener('click',()=>selectView('day',item.day));links.append(together);}
-      tile.append(video,warning,metadata,links);
+      const download=document.createElement('a');download.href=item.download_url;download.textContent='↓';download.title='Download MP4';download.setAttribute('aria-label',`${item.camera}: Download MP4`);download.setAttribute('download','');links.append(download);
+      if(galleryView==='latest'){const together=document.createElement('button');together.className='secondary';together.textContent='▦';together.title='All cameras on this day';together.setAttribute('aria-label',`${item.camera}: All cameras on this day`);together.addEventListener('click',()=>selectView('day',item.day));links.append(together);}
+      player.querySelector('.video-controls').append(links);
+      if(item.previous_export){warning.hidden=false;warning.textContent='Previous successful export; current job '+item.job_status;}
+      tile.append(player,warning);
     }else{const empty=document.createElement('p');empty.className='tile-empty';empty.textContent=item.unavailable_reason || (item.job_status?`No completed export · ${item.job_status}`:'No completed export for this camera/date.');tile.append(empty);}
     el('gallery-grid').append(tile);
   }

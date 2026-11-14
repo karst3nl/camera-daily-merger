@@ -41,3 +41,23 @@ is running and opens normally for the same user. If a video cannot play, check
 codec support and the six-stream limit. Choose a taller card if controls are cut
 off. The previous custom Lovelace resource remains served for existing alpha.9
 installations, but is unnecessary for the native setup.
+
+## Surveillance view (alpha.11)
+
+The add-on opens as a full-width camera wall. Camera tiles sit directly beside
+each other, with only the camera name and export date above each image. Desktop
+columns adapt to available width; narrow screens retain two columns. Processing
+and installation remain accessible through their separate controls.
+
+Each tile has playback controls **below** the image: play/pause, seek, audio,
+zoom out/in, reset and fullscreen where supported. Native video controls are
+disabled in the camera wall so their overlay cannot hide recorded details.
+Fullscreen expands the complete player, keeping the controls outside the image.
+The separate processing/single-camera view retains its original native player.
+
+Use **+ / −** for digital zoom from 1× to 4× in half steps; the magnification
+button resets to 1×. Drag a zoomed image with a mouse or finger to inspect its
+edges. Zoom is local to that player and resets when a view is rebuilt. It does
+not move the physical camera, add detail, copy recordings or transcode media.
+Only actual playback/export errors add diagnostic text to a tile. The date always
+identifies the displayed export, including a retained prior successful export.

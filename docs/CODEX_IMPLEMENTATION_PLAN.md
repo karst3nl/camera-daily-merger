@@ -264,3 +264,11 @@ card. Reuse the HA app panel route and official ingress properties protocol for
 compact views and installation-specific stable URLs. Keep the earlier resource
 available for existing users. Verify protocol, playback, date preservation and
 existing regression suites with synthetic exports; real HA acceptance remains open.
+
+## Surveillance dashboard refinement (owner requested)
+
+Alpha.11 adds a full-width, adjacent camera grid with name/date metadata only,
+external playback controls and bounded client-side zoom/pan. Test playback, seek,
+audio, fullscreen geometry, zoom limits/reset/panning and desktop/mobile layouts
+with synthetic video before committing. Preserve the native dashboard bridge,
+processing UI and all source/storage safety invariants.
