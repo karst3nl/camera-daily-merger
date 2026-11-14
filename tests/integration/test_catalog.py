@@ -166,3 +166,20 @@ def test_media_limit_keeps_metadata_available(tmp_path):
         finally:
             for _ in range(6):
                 server.media_slots.release()
+
+
+def test_corrupt_version_cannot_inject_response_headers(tmp_path):
+    with app(tmp_path) as (url, store):
+        published(store, tmp_path, "a", "2026-11-12")
+        row = store.get("a", "2026-11-12")
+        metadata = json.loads(row["output"])
+        metadata["sha256"] = "bad\r\nX-Injected: unsafe"
+        with store.transaction() as db:
+            db.execute(
+                "UPDATE jobs SET output=? WHERE camera='a'", (json.dumps(metadata),)
+            )
+        status, body, headers = request(url + "/video/a/2026-11-12")
+        assert status == 404
+        assert "X-Injected" not in headers
+        assert b"X-Injected" not in body
+        assert not json.loads(request(url + "/api/videos")[1])["videos"][0]["available"]

@@ -628,3 +628,8 @@ browser tests. Runner annotations identify ubuntu-latest migrating to Ubuntu 26;
 pinned the browser job to Ubuntu 24.04, supported by the pinned Playwright 1.57.
 This is a test-runner compatibility correction, not a change to the Pi image or
 application authentication. Hosted browser rerun results are reported separately.
+
+Final output-version hardening validates the stored SHA256 before using it in an
+ETag header; malformed state is unavailable rather than reflected into headers.
+Added an HTTP regression with a corrupted metadata version containing CR/LF.
+Final full-suite count is 97 passed, 0 failed.

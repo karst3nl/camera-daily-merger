@@ -306,7 +306,7 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                             break
                         self.wfile.write(chunk)
                         remaining -= len(chunk)
-            except (OSError, ValueError, KeyError):
+            except (OSError, ValueError, KeyError, TypeError):
                 if not sent_headers:
                     self.reply(404, {"error": "Output unavailable"})
                 else:

@@ -78,6 +78,12 @@ def open_export(settings, camera: str, day: str, metadata: dict):
     from pathlib import PurePosixPath
     import re
 
+    if (
+        not isinstance(metadata, dict)
+        or not isinstance(metadata.get("sha256"), str)
+        or not re.fullmatch(r"[0-9a-f]{64}", metadata["sha256"])
+    ):
+        raise ValueError("Invalid export version")
     if date.fromisoformat(day).isoformat() != day:
         raise ValueError("Invalid export date")
     relative = PurePosixPath(metadata["path"])
