@@ -180,14 +180,14 @@ def main():
             mobile_b = page.locator('.camera-tile[data-camera="b"]').bounding_box()
             assert mobile_a["y"] == mobile_b["y"]
             assert mobile_b["x"] > mobile_a["x"]
-            for control in page.locator(
-                '.camera-tile[data-camera="a"] .video-controls button'
-            ).all():
-                box = control.bounding_box()
-                assert (
-                    box["x"] >= mobile_a["x"]
-                    and box["x"] + box["width"] <= mobile_a["x"] + mobile_a["width"] + 1
-                )
+            control_box = page.locator(
+                '.camera-tile[data-camera="a"] .video-controls'
+            ).bounding_box()
+            assert control_box["x"] >= mobile_a["x"]
+            assert (
+                control_box["x"] + control_box["width"]
+                <= mobile_a["x"] + mobile_a["width"] + 1
+            )
             page.screenshot(path="work/gallery-mobile.png", full_page=True)
             page.goto(url + "/#view=day&day=2026-11-12&embed=1")
             expect(page.locator("#gallery-grid video")).to_have_count(2)
@@ -262,13 +262,80 @@ def main():
             )
             expect(frame.locator("#gallery-title")).to_have_text("Latest per camera")
             expect(frame.locator("#gallery-grid video")).to_have_count(2)
+            # Actual nested card dimensions, independent of the physical screen.
+            page.wait_for_function(
+                "() => {const g=document.querySelector('iframe').contentDocument.querySelector('#gallery-grid'); return g.dataset.fitColumns && g.getBoundingClientRect().bottom <= 900;}"
+            )
+            page.locator("iframe").evaluate("f=>{f.width='720';f.height='430';}")
+            page.wait_for_function(
+                "() => {const doc=document.querySelector('iframe').contentDocument,g=doc.querySelector('#gallery-grid');return g.getBoundingClientRect().right<=720 && g.getBoundingClientRect().bottom<=430;}"
+            )
             # Four equal windows, shared resizing and persisted layout preferences.
             published(store, root, "c", "2026-11-12", body=body, duration=5.0)
             published(store, root, "d", "2026-11-12", body=body, duration=5.0)
             page.set_viewport_size({"width": 1280, "height": 1000})
             page.goto(url)
             expect(page.locator("#gallery-grid video")).to_have_count(4)
+
+            # Auto-fit maximizes common image size and keeps every tile visible.
+            def assert_auto_fit(width, height):
+                page.set_viewport_size({"width": width, "height": height})
+                page.wait_for_function(
+                    "() => {const g=document.querySelector('#gallery-grid'),b=g.getBoundingClientRect();return g.dataset.fitViewportWidth===String(innerWidth) && g.dataset.fitViewportHeight===String(innerHeight) && b.bottom<=innerHeight && b.right<=innerWidth;}"
+                )
+                tiles = [
+                    tile.bounding_box() for tile in page.locator(".camera-tile").all()
+                ]
+                assert len(tiles) == 4
+                assert (
+                    max(t["width"] for t in tiles) - min(t["width"] for t in tiles) < 1
+                )
+                assert (
+                    max(t["height"] for t in tiles) - min(t["height"] for t in tiles)
+                    < 1
+                )
+                actual = page.locator(".video-viewport").first.bounding_box()["width"]
+                expected_columns = (
+                    4 if (width, height) in [(844, 390), (800, 600)] else 2
+                )
+                assert (
+                    int(page.locator("#gallery-grid").get_attribute("data-fit-columns"))
+                    == expected_columns
+                )
+                assert actual > 0
+                for tile in tiles:
+                    assert tile["x"] >= 0 and tile["y"] >= 0
+                    assert tile["x"] + tile["width"] <= width + 1
+                    assert tile["y"] + tile["height"] <= height + 1
+
+            page.locator("#gallery-grid video").first.evaluate(
+                "v=>window.autoFitPlayer=v"
+            )
+            for dimensions in [
+                (1280, 1000),
+                (1920, 1080),
+                (844, 390),
+                (390, 844),
+                (800, 600),
+            ]:
+                assert_auto_fit(*dimensions)
+            assert page.evaluate(
+                "window.autoFitPlayer===document.querySelector('#gallery-grid video')"
+            )
+            page.screenshot(path="work/auto-fit-wall.png", full_page=True)
+            # Camera-list mutations trigger fitting without a window resize.
+            page.evaluate(
+                "() => {const g=document.querySelector('#gallery-grid'),tile=g.firstElementChild; for(let i=0;i<2;i++){const extra=tile.cloneNode(true);extra.dataset.syntheticExtra='1';g.append(extra);}}"
+            )
+            page.wait_for_function(
+                "() => {const g=document.querySelector('#gallery-grid');return g.dataset.fitColumns==='3' && g.dataset.fitRows==='2' && g.getBoundingClientRect().bottom<=innerHeight;}"
+            )
+            page.evaluate(
+                "document.querySelectorAll('[data-synthetic-extra]').forEach(tile=>tile.remove())"
+            )
+            assert_auto_fit(1280, 1000)
             page.locator(".layout-settings summary").click()
+            assert_auto_fit(1280, 1000)
             page.get_by_label("Columns", exact=True).select_option("2")
 
             def equal_windows():
@@ -287,6 +354,9 @@ def main():
                 assert boxes[2]["y"] == boxes[3]["y"] > boxes[0]["y"]
                 return boxes
 
+            page.wait_for_function(
+                "() => !document.body.classList.contains('auto-fit') && document.querySelector('#gallery-grid').style.width==='100%'"
+            )
             before = equal_windows()
             page.get_by_role("button", name="Play all", exact=True).click()
             page.wait_for_function(
@@ -329,7 +399,7 @@ def main():
             expect(page.locator("#layout-columns")).to_have_value("auto")
             expect(page.locator("#layout-size")).to_have_value("100")
             page.evaluate(
-                "localStorage.setItem('camera-daily-merger.layout.v1',JSON.stringify({columns:'999',size:-10}))"
+                "localStorage.setItem('camera-daily-merger.layout.v2',JSON.stringify({columns:'999',size:-10}))"
             )
             page.reload()
             expect(page.locator("#layout-columns")).to_have_value("auto")
@@ -348,7 +418,7 @@ def main():
             assert not errors, errors
             browser.close()
             print(
-                "PASS latest per camera, shared day, missing camera, play/pause all, non-disruptive refresh, mobile/embedded views, external controls, seeking, audio, fullscreen, zoom/pan, equal 2x2 sizing and browser preferences"
+                "PASS latest per camera, shared day, missing camera, play/pause all, non-disruptive refresh, mobile/embedded views, external controls, seeking, audio, fullscreen, zoom/pan, equal 2x2 sizing, browser preferences and automatic viewport fitting"
             )
 
 

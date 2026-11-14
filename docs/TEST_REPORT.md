@@ -729,3 +729,43 @@ mobile-device acceptance: NOT RUN. Preferences apply to this browser/HA origin,
 not automatically to other devices. More cameras produce more rows; the existing
 six-simultaneous-stream limit remains. Phase 7 acceptance remains open; main stays
 unchanged.
+
+## Automatic display/viewport fitting — 0.1.0-alpha.13
+
+Automatic fitting is the new default. It reads the actual viewport/card width and
+height, reserves navigation/labels/external controls, and selects the arrangement
+with the largest equal 16:9 camera images. Event-driven updates handle resize,
+orientation, toolbar expansion and camera count changes without replacing players.
+Preference v2 starts alpha.12 users in auto mode; manual layouts remain available.
+
+Commands/results using synthetic recordings and temporary NAS storage:
+
+- `.venv/bin/ruff check .` and `.venv/bin/ruff format --check .`: passed.
+- `.venv/bin/python -m pytest`: 97 passed, 0 failed.
+- `.venv/bin/python -m tests.integration.check_gallery_browser --chromium /usr/bin/chromium`:
+  passed existing playback/native bridge/zoom/manual preferences and new viewport
+  tests at 1280×1000, 1920×1080, 844×390, 390×844 and 800×600. All four equal tiles
+  remain within the viewport with expected grid choices. Also passed camera-list
+  mutation to six tiles, toolbar expansion, nested frame resize from 1200×900 to
+  720×430 and preservation of media elements. A transient resize overflow found
+  during testing was corrected with a maximum grid width before successful reruns.
+  Narrow control rows scroll internally and reserve scrollbar height; controls
+  remain outside the image. Visually reviewed the synthetic viewport screenshot.
+- `.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium`:
+  passed original management/playback/download/reprocess/mobile regressions.
+- `.venv/bin/python -m tests.integration.check_dashboard_card --chromium /usr/bin/chromium`:
+  passed current/legacy authenticated dashboard bridge regressions.
+- `.venv/bin/python -m build` and `.venv/bin/python -m pip check`: passed.
+- Native AMD64 image build and `.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64 --compact --mixed-rate`:
+  passed automatic merge, restart idempotency, graceful shutdown and source hashes.
+  A final rerun initially could not create its container because accumulated Docker
+  build artifacts exhausted workspace disk. Removed generated build caches and
+  untagged images, recovered space and successfully reran the same image test.
+- `.venv/bin/python work/scan.py` and `git diff --check`: passed heuristic privacy
+  and whitespace checks. MIT license unchanged; original recordings untouched.
+
+Actual HA/Pi/NAS, Safari and physical mobile-device acceptance: NOT RUN. Extremely
+short panels or large camera lists may lack even enough room for labels/controls;
+Layout status requests more panel height and keeps cameras reachable by scrolling.
+No new backend polling, media copy, transcoding or screen permission. Phase 7
+acceptance remains open; no main merge or production-readiness claim.

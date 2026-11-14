@@ -93,3 +93,10 @@
 - Shared window-size control keeps camera tiles equal and preserves playback.
 - Validated browser-local layout preferences, reset and blocked-storage fallback.
 - Clamp zoom/pan during window resizing without reloading video streams.
+
+## 0.1.0-alpha.13
+
+- Default to automatic camera sizing using actual available viewport width/height.
+- Choose the grid with the largest equal images while retaining all camera tiles.
+- Adapt to window/card resize, orientation, camera count and toolbar changes.
+- Keep external controls and media elements; retain optional manual layouts.

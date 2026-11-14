@@ -32,3 +32,6 @@ external playback controls and local digital zoom/pan. No new configuration.
 
 Alpha.12 adds graphical **Layout** controls for 1–4 columns (including 2×2) and
 shared equal window sizing. Preferences are saved in the current browser.
+
+Alpha.13 defaults to automatic camera fitting using the available browser/card
+width and height. All cameras keep equal sizes and adapt when the viewport changes.

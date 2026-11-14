@@ -82,3 +82,25 @@ Only column count and size are stored, never recordings or credentials. If brows
 storage is blocked, changes work for the current page and a status explains that
 they cannot persist. **Reset layout** restores automatic columns and 100% width.
 The six-simultaneous-stream limit is unchanged.
+
+## Automatic fit to the available display (alpha.13)
+
+**Automatic · fit all cameras** is now the default. It reads the actual browser
+or embedded card viewport, subtracts navigation/toolbar space, and selects the
+row/column arrangement with the largest equal 16:9 camera images that fit both
+width and height. The device's physical screen resolution is not used: a dashboard
+card can be much smaller than that screen. The wall adapts to window resizing,
+rotation, browser viewport changes, changed camera counts and expanded controls.
+Playback elements and zoom remain intact. Missing exports count as camera tiles.
+
+Labels and playback controls stay outside each image. In automatic mode controls
+use a fixed-height row; swipe/scroll that row horizontally on small tiles to reach
+all buttons. The normal six-stream limit remains. Very short cards or very large
+camera lists can lack even enough room for labels and controls; the Layout status
+then asks for a taller panel rather than hiding cameras or controls.
+
+Automatic mode controls size itself, so the manual size slider is disabled. Manual
+1–4-column selection and shared sizing remain available. **Reset layout** restores
+automatic fitting. Alpha.13 starts with automatic fitting even if alpha.12 had a
+saved layout; subsequent choices use the new browser preference version. No screen
+permission, new media processing, file copy or server-side polling is required.

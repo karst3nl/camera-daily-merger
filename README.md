@@ -32,7 +32,7 @@ operation remain unverified. This is not a production-ready add-on.
 Project code and documentation use the [MIT license](LICENSE). Third-party
 software retains its own licenses; see [dependency notices](docs/THIRD_PARTY.md).
 
-Current add-on snapshot: **0.1.0-alpha.12**. Install the alpha repository using
+Current add-on snapshot: **0.1.0-alpha.13**. Install the alpha repository using
 `https://github.com/karst3nl/camera-daily-merger#alpha`; see setup for verified
 branch-selector behavior and device-test limitations. Configure sources in the
 Home Assistant Configuration tab; empty defaults do not process media.
@@ -55,3 +55,7 @@ configuration is needed. See the [dashboard guide](docs/DASHBOARD.md).
 Alpha.12 adds **Layout** controls: choose columns (two for a four-camera 2×2 wall)
 and resize all equal camera windows together. Preferences stay in your browser;
 no YAML or media copies are needed.
+
+Alpha.13 automatically fits all camera windows to the actual available width and
+height, choosing the largest equal images and adapting to window/card resizing.
+Manual layout controls remain available.

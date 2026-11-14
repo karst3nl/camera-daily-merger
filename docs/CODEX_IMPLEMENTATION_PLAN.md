@@ -280,3 +280,11 @@ control. Four cameras in two columns form 2×2. Preserve equal tile dimensions,
 playback and zoom while resizing; store only validated browser-local preferences.
 Test four synthetic cameras, missing tiles, view changes/reload, mobile layout,
 blocked/corrupt storage and existing pipeline/browser gates before commit/push.
+
+## Automatic viewport fit (owner requested)
+
+Alpha.13 defaults to height-and-width-aware layout, maximizing equal camera image
+size while reserving labels/control rows. Recompute using event-driven viewport,
+chrome and camera-count observers. Preserve optional manual sizing, playback and
+zoom. Validate desktop, portrait, landscape and nested card resize plus existing
+browser/pipeline checks before publishing on alpha.

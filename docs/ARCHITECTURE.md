@@ -209,3 +209,15 @@ windows equal. Preferences contain only a validated column choice and a bounded
 size percentage in localStorage; inaccessible/corrupt storage falls back safely.
 ResizeObserver clamps existing zoom/pan when viewport dimensions change; gallery
 teardown disconnects its observer. No backend persistence or media copies added.
+
+## Automatic viewport fitting
+
+The browser evaluates each possible column count and chooses the largest common
+16:9 image width fitting the available viewport width and remaining height after
+chrome, 32px label rows and 52px external control rows (plus visible diagnostics).
+This is O(camera count), with no per-candidate DOM reconstruction or measurement.
+Fractional dimensions round down to avoid overflow. Auto controls scroll internally
+on narrow tiles. RequestAnimationFrame coalesces resize, visualViewport, toolbar
+ResizeObserver and camera-grid mutation events; there is no continuous layout loop
+or server polling. Browser preferences v2 deliberately default previous alpha.12
+installations to automatic fitting; manual overrides remain available.
