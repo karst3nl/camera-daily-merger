@@ -1,6 +1,6 @@
 # Camera Daily Merger — Project Specification
 
-**Specification version:** 1.8
+**Specification version:** 1.9
 **Status:** Alpha development; Phases 0–6 synthetic validation complete, real acceptance pending
 **License:** MIT (see [LICENSE](../LICENSE))  
 **Project:** https://github.com/karst3nl/camera-daily-merger
@@ -37,9 +37,11 @@ Camera Daily Merger is an open-source Home Assistant add-on (Home Assistant App)
 - Offer automatic or 1–4-column layouts, including 2×2 for four cameras. Resize
   windows together while keeping equal tile geometry and preserving playback.
   Remember validated layout preferences locally in the browser.
-- Default to automatic viewport fitting: use actual available width and height,
-  maximize equal 16:9 camera images while showing all cameras and external controls,
-  and recalculate on resize, orientation, camera count and toolbar changes.
+- Default to a fixed two-column automatic grid: four cameras always form 2×2.
+  Fit the complete grid to actual viewport width/height without page or playback-
+  control scrolling. Keep equal windows, preserve image aspect ratio with letterbox
+  space as needed, and adapt on resize/orientation/camera count/toolbar changes.
+- Keep camera navigation compact; dashboard setup belongs in management only.
 
 ## 3. Storage design
 

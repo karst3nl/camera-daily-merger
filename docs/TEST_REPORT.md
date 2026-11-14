@@ -769,3 +769,40 @@ short panels or large camera lists may lack even enough room for labels/controls
 Layout status requests more panel height and keeps cameras reachable by scrolling.
 No new backend polling, media copy, transcoding or screen permission. Phase 7
 acceptance remains open; no main merge or production-readiness claim.
+
+## Fixed 2×2 compact camera view — 0.1.0-alpha.14
+
+The requested default is now fixed at two columns: four cameras always form 2×2,
+including landscape. Equal windows fill remaining width/height with letterboxed
+video. Camera-view setup button/section are absent; setup stays in Processing.
+Navigation and playback buttons are smaller; refresh shares the playback toolbar.
+Player controls wrap below images instead of scrolling horizontally. Preference
+v3 resets prior installations to automatic mode; manual options remain available.
+
+Exact commands and results (synthetic media/temporary NAS directories):
+
+- `.venv/bin/ruff check .` and `.venv/bin/ruff format --check .`: passed.
+- `.venv/bin/python -m pytest`: 97 passed, 0 failed.
+- `.venv/bin/python -m tests.integration.check_gallery_browser --chromium /usr/bin/chromium`:
+  passed original playback/zoom/fullscreen/native-bridge/manual-preference tests.
+  New assertions verify fixed 2×2 and equal windows at 1280×1000, 1920×1080,
+  844×390, 390×844 and 800×600, plus shared-day portrait/landscape with date controls.
+  Document scrollHeight/scrollWidth fit the viewport; control bars require no
+  internal scrolling; every control fits its bar and tile. Setup is hidden in
+  camera views and accessible in management. Nested-frame resize and changing to
+  six synthetic tiles (two columns/three rows) also passed. Reviewed screenshot.
+- `.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium`:
+  passed management/download/reprocess/mobile regressions.
+- `.venv/bin/python -m tests.integration.check_dashboard_card --chromium /usr/bin/chromium`:
+  passed modern/legacy authenticated dashboard/session regressions.
+- `.venv/bin/python -m build` and `.venv/bin/python -m pip check`: passed.
+- Native AMD64 image build and `.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64 --compact --mixed-rate`:
+  passed automatic merging, restart idempotency, graceful shutdown, source hashes.
+- `.venv/bin/python work/scan.py` and `git diff --check`: passed heuristic privacy
+  and whitespace checks. MIT license unchanged; original recordings untouched.
+
+Actual HA/Pi/NAS and physical mobile/Safari acceptance: NOT RUN. Very small cards,
+large camera counts or expanded manual settings still need physical room for labels
+and controls; verified scroll freedom applies to the normal four-camera automatic
+view at the tested sizes. No hidden cameras, transcoding or recording copies. Phase
+7 acceptance stays open; main unchanged.

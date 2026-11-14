@@ -1,10 +1,10 @@
 # Native Home Assistant dashboard
 
-Available in **0.1.0-alpha.10**. No recording copies, JavaScript installation,
+Current version: **0.1.0-alpha.14**. No recording copies, JavaScript installation,
 custom resources or YAML are required.
 
 1. Update and restart the add-on, then open its web UI through Home Assistant.
-2. Open **Dashboard setup**. The app displays two installation-specific URLs.
+2. Open **Processing > Dashboard setup**. The app displays two installation-specific URLs.
 3. Edit your normal dashboard, select **Add card > Webpage**, and enter the
    **Latest per camera** URL in the graphical URL field. Adjust the card aspect
    ratio to provide enough height for the camera grid.
@@ -45,8 +45,8 @@ installations, but is unnecessary for the native setup.
 ## Surveillance view (alpha.11)
 
 The add-on opens as a full-width camera wall. Camera tiles sit directly beside
-each other, with only the camera name and export date above each image. Desktop
-columns adapt to available width; narrow screens retain two columns. Processing
+each other, with only the camera name and export date above each image. Automatic
+mode retains two columns on desktop and narrow screens. Processing
 and installation remain accessible through their separate controls.
 
 Each tile has playback controls **below** the image: play/pause, seek, audio,
@@ -71,8 +71,8 @@ column choices also apply on mobile and inside the Home Assistant dashboard.
 
 Use **Window size** (50–100%) to resize every camera window together. The value
 sets the wall's width relative to the available space; 100% fills that space.
-All tiles keep equal widths and heights, with the same 16:9 video viewport and
-external controls. Videos with a different aspect ratio are letterboxed. Missing
+Manual tiles keep equal widths/heights and a 16:9 video viewport with
+external controls; automatic mode fills the available viewport. Videos with a different aspect ratio are letterboxed. Missing
 exports retain equal-sized tiles. Long camera names are shortened visually.
 Layout changes preserve the existing players, playback positions and zoom.
 
@@ -83,24 +83,25 @@ storage is blocked, changes work for the current page and a status explains that
 they cannot persist. **Reset layout** restores automatic columns and 100% width.
 The six-simultaneous-stream limit is unchanged.
 
-## Automatic fit to the available display (alpha.13)
+## Fixed 2×2 automatic view (alpha.14)
 
-**Automatic · fit all cameras** is now the default. It reads the actual browser
-or embedded card viewport, subtracts navigation/toolbar space, and selects the
-row/column arrangement with the largest equal 16:9 camera images that fit both
-width and height. The device's physical screen resolution is not used: a dashboard
-card can be much smaller than that screen. The wall adapts to window resizing,
-rotation, browser viewport changes, changed camera counts and expanded controls.
-Playback elements and zoom remain intact. Missing exports count as camera tiles.
+**Automatic · 2×2** is the default. Four cameras always occupy two columns and
+two rows, including landscape screens. One camera uses one column; more than four
+cameras continue in two columns with additional rows. No configured camera is
+silently omitted. The complete grid uses available viewport width and height;
+all windows stay equal. Images preserve their aspect ratio with letterboxing.
 
-Labels and playback controls stay outside each image. In automatic mode controls
-use a fixed-height row; swipe/scroll that row horizontally on small tiles to reach
-all buttons. The normal six-stream limit remains. Very short cards or very large
-camera lists can lack even enough room for labels and controls; the Layout status
-then asks for a taller panel rather than hiding cameras or controls.
+The camera view has compact navigation and no Dashboard setup button or section.
+Setup links remain available in **Processing > Dashboard setup**. Refresh is in
+the compact playback toolbar, alongside date navigation in the shared-day view.
+Player controls wrap below the images instead of scrolling sideways. Automatic
+mode fits the normal four-camera view without page or control scrolling and
+recalculates when the viewport, camera list or toolbar changes. Existing players,
+playback positions and zoom are retained during resizing.
 
-Automatic mode controls size itself, so the manual size slider is disabled. Manual
-1–4-column selection and shared sizing remain available. **Reset layout** restores
-automatic fitting. Alpha.13 starts with automatic fitting even if alpha.12 had a
-saved layout; subsequent choices use the new browser preference version. No screen
-permission, new media processing, file copy or server-side polling is required.
+Manual columns/sizing remain available through **Layout**; **Reset layout**
+restores automatic 2×2. Alpha.14 starts prior installations in automatic mode using
+browser preference v3. Automatic mode sizes windows itself, so its size slider is
+disabled. The six-simultaneous-stream limit is unchanged. Extremely small cards,
+very large camera lists or expanded settings still need enough physical space for
+readable controls; real Home Assistant/mobile acceptance remains necessary.

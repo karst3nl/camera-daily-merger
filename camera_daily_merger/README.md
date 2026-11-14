@@ -21,17 +21,11 @@ Project code is MIT-licensed. Bundled FFmpeg and other libraries retain their ow
 license terms; see THIRD_PARTY.md. Develop and test alpha only; main requires
 separate owner approval after real-device acceptance.
 
-Latest-per-camera and shared-day galleries work in the normal Home Assistant
-Webpage card in alpha.10. Open **Dashboard setup** for installation-specific URLs;
+The camera view defaults to a fixed **2×2 wall for four cameras**, compact
+navigation and external wrapping playback controls. Equal windows fit the actual
+viewport without normal page/control scrolling. Digital zoom/pan and optional
+manual layouts remain available; recordings are never copied for the dashboard.
+
+For a native Home Assistant Webpage card, open **Processing > Dashboard setup**;
 see the [dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md).
-No file copies, custom resources or YAML are required. Existing app access rules
-apply and recordings are streamed directly from existing exports.
-
-Alpha.11 adds a compact surveillance wall with adjacent cameras, name/date labels,
-external playback controls and local digital zoom/pan. No new configuration.
-
-Alpha.12 adds graphical **Layout** controls for 1–4 columns (including 2×2) and
-shared equal window sizing. Preferences are saved in the current browser.
-
-Alpha.13 defaults to automatic camera fitting using the available browser/card
-width and height. All cameras keep equal sizes and adapt when the viewport changes.
+No custom resources or YAML are required. Existing authenticated app access applies.

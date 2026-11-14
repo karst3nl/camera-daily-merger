@@ -1,17 +1,7 @@
 'use strict';
-// Maximize the common 16:9 image width, allowing room for labels and controls.
-function chooseCameraLayout(count,width,height,overhead=84,gap=2){
-  let best=null;
-  for(let columns=1;columns<=count;columns++){
-    const rows=Math.ceil(count/columns);
-    const tileWidth=Math.min((width-gap*(columns-1))/columns,((height-gap*(rows-1))/rows-overhead)*16/9);
-    if(tileWidth>0 && (!best || tileWidth>best.tileWidth+0.01))best={columns,rows,tileWidth};
-  }
-  return best;
-}
 (() => {
-  // New default replaces alpha.12's width-only automatic preference.
-  const key='camera-daily-merger.layout.v2';
+  // Default existing installations to the requested fixed two-column automatic wall.
+  const key='camera-daily-merger.layout.v3';
   const columns=document.getElementById('layout-columns');
   const size=document.getElementById('layout-size');
   const output=document.getElementById('layout-size-value');
@@ -31,6 +21,7 @@ function chooseCameraLayout(count,width,height,overhead=84,gap=2){
     grid.dataset.columns=columns.value;
     grid.style.removeProperty('grid-template-columns');
     grid.style.removeProperty('grid-template-rows');
+    grid.style.removeProperty('height');
     grid.style.width=automatic?'100%':`${size.value}%`;
     if(!active || document.getElementById('gallery-panel').hidden)return;
     if(document.fullscreenElement)return;
@@ -38,28 +29,20 @@ function chooseCameraLayout(count,width,height,overhead=84,gap=2){
     if(!count)return;
     const main=document.querySelector('main');
     const padding=parseFloat(getComputedStyle(main).paddingBottom)||0;
-    const width=grid.parentElement.clientWidth;
-    // Use the actual app/card viewport, never the device's physical screen size.
+    // The app/card viewport bounds the complete two-column camera wall.
     const viewport=window.visualViewport;
     const bottom=(viewport?viewport.height:innerHeight)-padding-2;
     const top=grid.getBoundingClientRect().top+window.scrollY;
-    const warning=[...grid.querySelectorAll('.tile-warning')].some(node=>!node.hidden)?32:0;
-    const overhead=84+warning;
-    const best=chooseCameraLayout(count,width,bottom-top,overhead);
-    if(!best){
-      status.textContent='Not enough height for all camera controls. Increase the panel height or close the layout settings.';
-      return;
-    }
-    // Round down so fractional CSS pixels cannot push the last row out of view.
-    const tileWidth=Math.floor(best.tileWidth*100)/100;
-    grid.style.width=`${tileWidth*best.columns+2*(best.columns-1)}px`;
-    grid.style.gridTemplateColumns=`repeat(${best.columns},minmax(0,1fr))`;
-    grid.style.gridTemplateRows=`repeat(${best.rows},${tileWidth*9/16+overhead}px)`;
-    grid.dataset.fitColumns=String(best.columns);
-    grid.dataset.fitRows=String(best.rows);
+    const height=Math.max(0,Math.floor(bottom-top));
+    const fitColumns=Math.min(2,count),rows=Math.ceil(count/fitColumns);
+    grid.style.height=`${height}px`;
+    grid.style.gridTemplateColumns=`repeat(${fitColumns},minmax(0,1fr))`;
+    grid.style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;
+    grid.dataset.fitColumns=String(fitColumns);
+    grid.dataset.fitRows=String(rows);
     grid.dataset.fitViewportWidth=String(innerWidth);
     grid.dataset.fitViewportHeight=String(innerHeight);
-    const message=`Automatic: ${best.columns} × ${best.rows}.`;
+    const message=`Automatic: ${fitColumns} × ${rows}.`;
     status.textContent=message+(storageBlocked?' Browser storage unavailable.':'');
   }
   function schedule(){if(!queued){queued=true;requestAnimationFrame(fit);}}

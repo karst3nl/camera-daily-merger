@@ -100,3 +100,10 @@
 - Choose the grid with the largest equal images while retaining all camera tiles.
 - Adapt to window/card resize, orientation, camera count and toolbar changes.
 - Keep external controls and media elements; retain optional manual layouts.
+
+## 0.1.0-alpha.14
+
+- Automatic mode always uses two columns: four cameras form 2×2 on every screen.
+- Fill available viewport with equal camera windows and letterboxed video images.
+- Compact camera navigation and wrapping external controls remove normal scrolling.
+- Dashboard setup remains in Processing and is absent from camera views.

@@ -212,12 +212,15 @@ teardown disconnects its observer. No backend persistence or media copies added.
 
 ## Automatic viewport fitting
 
-The browser evaluates each possible column count and chooses the largest common
-16:9 image width fitting the available viewport width and remaining height after
-chrome, 32px label rows and 52px external control rows (plus visible diagnostics).
-This is O(camera count), with no per-candidate DOM reconstruction or measurement.
-Fractional dimensions round down to avoid overflow. Auto controls scroll internally
-on narrow tiles. RequestAnimationFrame coalesces resize, visualViewport, toolbar
-ResizeObserver and camera-grid mutation events; there is no continuous layout loop
-or server polling. Browser preferences v2 deliberately default previous alpha.12
-installations to automatic fitting; manual overrides remain available.
+The default automatic wall uses two columns (one for a single camera) and as many
+rows as required. Four cameras therefore always form 2×2. The grid takes the
+actual remaining viewport height after compact navigation/toolbars and fills the
+available width. Equal minmax(0,1fr) tracks and flex players allocate leftover tile
+height to images after labels and wrapping external controls. Object-fit contain
+preserves video geometry with letterboxing. No page overflow hiding is used to
+fake fitting; browser tests check scroll dimensions and control bounds.
+
+RequestAnimationFrame coalesces viewport, toolbar ResizeObserver and camera-grid
+mutation events. There is no layout polling or reconstruction of media elements.
+Browser preference v3 starts prior versions in the requested default while keeping
+optional manual layouts. Setup stays in management, outside the camera view.

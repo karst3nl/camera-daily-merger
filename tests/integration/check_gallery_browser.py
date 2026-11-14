@@ -194,6 +194,11 @@ def main():
             assert not page.locator("header").is_visible()
             assert not page.locator("#management").is_visible()
             page.goto(url + "/#view=latest")
+            expect(page.locator("#dashboard-help")).not_to_be_visible()
+            expect(page.locator(".dashboard-setup")).not_to_be_visible()
+            page.get_by_role(
+                "button", name="Processing & single camera", exact=True
+            ).click()
             page.get_by_role("button", name="Dashboard setup", exact=True).click()
             expect(page.locator("#native-dashboard-status")).to_contain_text(
                 "Open this app"
@@ -294,14 +299,43 @@ def main():
                     max(t["height"] for t in tiles) - min(t["height"] for t in tiles)
                     < 1
                 )
+                expect(page.locator("#dashboard-help")).not_to_be_visible()
+                expect(page.locator(".dashboard-setup")).not_to_be_visible()
                 actual = page.locator(".video-viewport").first.bounding_box()["width"]
-                expected_columns = (
-                    4 if (width, height) in [(844, 390), (800, 600)] else 2
+                assert (
+                    page.locator("#gallery-grid").get_attribute("data-fit-columns")
+                    == "2"
                 )
                 assert (
-                    int(page.locator("#gallery-grid").get_attribute("data-fit-columns"))
-                    == expected_columns
+                    page.locator("#gallery-grid").get_attribute("data-fit-rows") == "2"
                 )
+                assert page.evaluate(
+                    "document.documentElement.scrollHeight<=innerHeight && document.documentElement.scrollWidth<=innerWidth"
+                )
+                for bar in page.locator(".video-controls").all():
+                    assert bar.evaluate(
+                        "b=>b.scrollWidth<=b.clientWidth && b.scrollHeight<=b.clientHeight"
+                    )
+                    bounds = bar.bounding_box()
+                    tile_bounds = (
+                        bar.locator("xpath=..").locator("xpath=..").bounding_box()
+                    )
+                    assert (
+                        bounds["y"] + bounds["height"]
+                        <= tile_bounds["y"] + tile_bounds["height"] + 1
+                    )
+                    assert bounds["y"] + bounds["height"] <= height + 1
+                    for control in bar.locator("button,a,input").all():
+                        box = control.bounding_box()
+                        assert box["x"] >= bounds["x"] - 1
+                        assert box["y"] >= bounds["y"] - 1
+                        assert (
+                            box["x"] + box["width"] <= bounds["x"] + bounds["width"] + 1
+                        )
+                        assert (
+                            box["y"] + box["height"]
+                            <= bounds["y"] + bounds["height"] + 1
+                        )
                 assert actual > 0
                 for tile in tiles:
                     assert tile["x"] >= 0 and tile["y"] >= 0
@@ -322,13 +356,20 @@ def main():
             assert page.evaluate(
                 "window.autoFitPlayer===document.querySelector('#gallery-grid video')"
             )
+            page.get_by_role("button", name="All cameras by day", exact=True).click()
+            expect(page.locator("#gallery-grid video")).to_have_count(4)
+            assert_auto_fit(390, 844)
+            assert_auto_fit(844, 390)
+            page.get_by_role("button", name="Latest per camera", exact=True).click()
+            expect(page.locator("#gallery-grid video")).to_have_count(4)
+            assert_auto_fit(800, 600)
             page.screenshot(path="work/auto-fit-wall.png", full_page=True)
             # Camera-list mutations trigger fitting without a window resize.
             page.evaluate(
                 "() => {const g=document.querySelector('#gallery-grid'),tile=g.firstElementChild; for(let i=0;i<2;i++){const extra=tile.cloneNode(true);extra.dataset.syntheticExtra='1';g.append(extra);}}"
             )
             page.wait_for_function(
-                "() => {const g=document.querySelector('#gallery-grid');return g.dataset.fitColumns==='3' && g.dataset.fitRows==='2' && g.getBoundingClientRect().bottom<=innerHeight;}"
+                "() => {const g=document.querySelector('#gallery-grid');return g.dataset.fitColumns==='2' && g.dataset.fitRows==='3' && g.getBoundingClientRect().bottom<=innerHeight;}"
             )
             page.evaluate(
                 "document.querySelectorAll('[data-synthetic-extra]').forEach(tile=>tile.remove())"
@@ -399,7 +440,7 @@ def main():
             expect(page.locator("#layout-columns")).to_have_value("auto")
             expect(page.locator("#layout-size")).to_have_value("100")
             page.evaluate(
-                "localStorage.setItem('camera-daily-merger.layout.v2',JSON.stringify({columns:'999',size:-10}))"
+                "localStorage.setItem('camera-daily-merger.layout.v3',JSON.stringify({columns:'999',size:-10}))"
             )
             page.reload()
             expect(page.locator("#layout-columns")).to_have_value("auto")

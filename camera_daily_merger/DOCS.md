@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.13 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.14 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -264,7 +264,7 @@ If another field differs, the field comparison remains the next diagnostic.
 
 ## Dashboard views
 
-Alpha.10 supports the normal Home Assistant Webpage card. Open **Dashboard setup**
+Alpha.10 supports the normal Home Assistant Webpage card. Open **Processing > Dashboard setup**
 in the app, then enter its latest/day URL in the card's graphical URL field.
 No file copies, custom resources or YAML are required. Follow the
 [dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md).

@@ -32,7 +32,7 @@ operation remain unverified. This is not a production-ready add-on.
 Project code and documentation use the [MIT license](LICENSE). Third-party
 software retains its own licenses; see [dependency notices](docs/THIRD_PARTY.md).
 
-Current add-on snapshot: **0.1.0-alpha.13**. Install the alpha repository using
+Current add-on snapshot: **0.1.0-alpha.14**. Install the alpha repository using
 `https://github.com/karst3nl/camera-daily-merger#alpha`; see setup for verified
 branch-selector behavior and device-test limitations. Configure sources in the
 Home Assistant Configuration tab; empty defaults do not process media.
@@ -42,20 +42,14 @@ and [security model](docs/SECURITY.md). Important initial limits include 256 cli
 per job, conservative MP4 codec matching, and retained output versions consuming
 extra storage. Real-device acceptance is blocked pending owner input/results.
 
-Alpha.10 embeds **Latest per camera** and **All cameras by day** in the normal
-Home Assistant **Webpage** card. Open **Dashboard setup** in the app for stable
+The camera view defaults to **2×2 for four cameras**, using equal windows that
+fill the available viewport. Compact navigation and external wrapping playback
+controls keep the normal view free of page/control scrolling. Digital zoom and
+pan operate locally without changing recordings. **Layout** retains optional
+manual columns/sizing.
+
+**Latest per camera** and **All cameras by day** can also be embedded in a native
+Home Assistant **Webpage** card. Open **Processing > Dashboard setup** for stable
 URLs and follow the [dashboard guide](docs/DASHBOARD.md). No file copies, custom
 resources or YAML are required. Home Assistant manages authenticated ingress;
-recordings are streamed directly from existing exports.
-
-Alpha.11 adds an adjacent surveillance camera wall with name/date labels, controls
-below the image and local 1–4× digital zoom/pan. Open the add-on normally; no new
-configuration is needed. See the [dashboard guide](docs/DASHBOARD.md).
-
-Alpha.12 adds **Layout** controls: choose columns (two for a four-camera 2×2 wall)
-and resize all equal camera windows together. Preferences stay in your browser;
-no YAML or media copies are needed.
-
-Alpha.13 automatically fits all camera windows to the actual available width and
-height, choosing the largest equal images and adapting to window/card resizing.
-Manual layout controls remain available.
+recordings stream directly from existing exports. Setup is absent from camera views.

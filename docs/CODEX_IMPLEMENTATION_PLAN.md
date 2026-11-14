@@ -288,3 +288,12 @@ size while reserving labels/control rows. Recompute using event-driven viewport,
 chrome and camera-count observers. Preserve optional manual sizing, playback and
 zoom. Validate desktop, portrait, landscape and nested card resize plus existing
 browser/pipeline checks before publishing on alpha.
+
+## Fixed 2×2 compact camera view (owner requested)
+
+Alpha.14 replaces variable automatic column selection with two columns, always
+2×2 for four cameras. Fit equal windows to remaining viewport height/width, retain
+image aspect ratio and wrap external controls without horizontal scrolling. Move
+setup out of camera views and compact navigation. Verify latest/day desktop,
+portrait, landscape and embedded layouts with page/control scroll dimensions and
+visible control bounds, plus existing regression/pipeline gates before publishing.
