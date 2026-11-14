@@ -621,3 +621,10 @@ download from the UI. Added a dedicated hosted browser CI job with an explicitly
 installed Playwright Chromium and configurable executable paths, so the new JS
 flows are regression-tested beyond local manual runs. Actual HA dashboard remains
 unverified; the mocked session contract is identified separately above.
+
+Hosted CI for step 2 commit 833a335: Python and add-on/container jobs passed. The
+new browser job failed during Playwright dependency installation before executing
+browser tests. Runner annotations identify ubuntu-latest migrating to Ubuntu 26;
+pinned the browser job to Ubuntu 24.04, supported by the pinned Playwright 1.57.
+This is a test-runner compatibility correction, not a change to the Pi image or
+application authentication. Hosted browser rerun results are reported separately.
