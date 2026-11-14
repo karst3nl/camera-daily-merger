@@ -633,3 +633,28 @@ Final output-version hardening validates the stored SHA256 before using it in an
 ETag header; malformed state is unavailable rather than reflected into headers.
 Added an HTTP regression with a corrupted metadata version containing CR/LF.
 Final full-suite count is 97 passed, 0 failed.
+
+## Native dashboard simplification — 0.1.0-alpha.10
+
+Implemented the owner-requested graphical Webpage-card workflow: stable app URLs,
+latest/day compact views, official HA ingress properties protocol, no file copies,
+custom resource registration or YAML. Existing exports are served directly.
+
+Validation on synthetic recordings and temporary NAS directories:
+
+- Ruff lint/format: passed; pytest: 97 passed, 0 failed.
+- All three Chromium suites passed: existing management/playback, gallery/native
+  bridge and backward-compatible custom-card/session behavior.
+- Native protocol browser fixture verified same-origin parent messages, rejection
+  of child impersonation and unsafe prefixes, kiosk subscription, latest/day
+  routes, pinned date, date preservation on repeated properties and real playback.
+- Package build and dependency consistency passed; native AMD64 add-on image built.
+- Container pipeline passed automatic merge, restart idempotency, graceful shutdown
+  and source-hash preservation using compact synthetic filenames/mixed frame rates.
+- Heuristic repository secret/private-address/media scan and diff whitespace check
+  passed. MIT license remains unchanged.
+
+The native bridge test mocks the official HA app-panel message interface, not an
+actual HA installation. Native Webpage-card embedding, authentication renewal and
+mobile companion behavior still require owner-device acceptance. ARM hardware and
+real NAS tests were not performed for this UI change. No release or main merge.

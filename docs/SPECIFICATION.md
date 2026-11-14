@@ -25,8 +25,8 @@ Camera Daily Merger is an open-source Home Assistant add-on (Home Assistant App)
 
 - Show each configured camera's newest published daily export, including its date.
 - Show all available camera exports for one chosen calendar day in a common view.
-- Provide a local HA Lovelace card using authenticated ingress; no permanent
-  session URL, public port or cloud runtime resource is required.
+- Use the native HA Webpage card with stable app routes and authenticated ingress.
+  No file copies, custom resources, YAML or recording copies are required.
 - Shared play/pause is parallel playback, not wall-clock synchronization: motion
   gaps are absent and per-camera timelines can have different lengths.
 - Keep browsing read-only and bounded; no server-side re-encoded mosaic is created.

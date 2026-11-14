@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.9 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.10 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -264,9 +264,9 @@ If another field differs, the field comparison remains the next diagnostic.
 
 ## Dashboard views
 
-Alpha.9 adds latest-per-camera and shared-day galleries plus a local Lovelace card.
-Open **Dashboard setup** in the app to download the JS resource. Follow the
-[dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md)
-for /config/www installation, the HA module resource, card YAML and authenticated
-ingress/session behavior. No static ingress token, public media port or transcoding
-is needed. Actual dashboard deployment on the owner HA remains to be verified.
+Alpha.10 supports the normal Home Assistant Webpage card. Open **Dashboard setup**
+in the app, then enter its latest/day URL in the card's graphical URL field.
+No file copies, custom resources or YAML are required. Follow the
+[dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md).
+Home Assistant manages ingress authentication. Actual owner-device dashboard
+acceptance remains to be verified.

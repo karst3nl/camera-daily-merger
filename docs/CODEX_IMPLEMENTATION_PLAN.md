@@ -256,3 +256,11 @@ Lovelace card using authenticated Home Assistant ingress sessions. Test/commit
 these independently on alpha. Multi-player controls do not imply wall-clock
 synchronization because motion-free periods are absent from the exports. Preserve
 no-public-port access, source immutability and bounded Raspberry Pi resources.
+
+## Native dashboard simplification (owner requested)
+
+Alpha.10 replaces the primary custom-resource setup with the built-in Webpage
+card. Reuse the HA app panel route and official ingress properties protocol for
+compact views and installation-specific stable URLs. Keep the earlier resource
+available for existing users. Verify protocol, playback, date preservation and
+existing regression suites with synthetic exports; real HA acceptance remains open.

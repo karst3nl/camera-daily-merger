@@ -21,9 +21,8 @@ Project code is MIT-licensed. Bundled FFmpeg and other libraries retain their ow
 license terms; see THIRD_PARTY.md. Develop and test alpha only; main requires
 separate owner approval after real-device acceptance.
 
-Latest-per-camera and shared-day galleries are available in alpha.9, including
-shared player controls and a local Lovelace card. Open **Dashboard setup** to
-download it; see the project's
-[dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md)
-for local resource installation and manual card YAML. Current app access policy
-continues to apply; no public video port or stored ingress token is introduced.
+Latest-per-camera and shared-day galleries work in the normal Home Assistant
+Webpage card in alpha.10. Open **Dashboard setup** for installation-specific URLs;
+see the [dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md).
+No file copies, custom resources or YAML are required. Existing app access rules
+apply and recordings are streamed directly from existing exports.

@@ -127,6 +127,10 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
             static = {
                 "/": ("index.html", "text/html; charset=utf-8"),
                 "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+                "/native-dashboard.js": (
+                    "native-dashboard.js",
+                    "text/javascript; charset=utf-8",
+                ),
                 "/style.css": ("style.css", "text/css; charset=utf-8"),
                 "/dashboard-card.js": (
                     "camera-daily-merger-card.js",

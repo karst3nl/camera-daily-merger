@@ -73,3 +73,9 @@
 - Alpha.9: local Lovelace card for latest-per-camera and shared-day collections,
   using authenticated HA ingress sessions with modern/legacy WS support, renewal
   and same-origin validation. Added in-app resource download/setup and documentation.
+
+## 0.1.0-alpha.10
+
+- Native Home Assistant Webpage card setup: no copied files, resource or YAML.
+- Stable latest/day links, official ingress properties bridge and compact mode.
+- Existing recording exports stream directly; source recordings stay untouched.

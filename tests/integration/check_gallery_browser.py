@@ -112,11 +112,73 @@ def main():
             assert not page.locator("#management").is_visible()
             page.goto(url + "/#view=latest")
             page.get_by_role("button", name="Dashboard setup", exact=True).click()
-            with page.expect_download() as download:
-                page.get_by_role(
-                    "link", name="Download dashboard card", exact=True
-                ).click()
-            assert download.value.suggested_filename == "camera-daily-merger-card.js"
+            expect(page.locator("#native-dashboard-status")).to_contain_text(
+                "Open this app"
+            )
+            # Mock the official HA app-panel properties bridge inside a native
+            # Webpage frame. Authentication/session handling belongs to HA.
+            page.route(
+                "**/native-panel-test",
+                lambda route: route.fulfill(
+                    content_type="text/html",
+                    body="""<!doctype html><body>
+                <iframe src="/" width="1200" height="900"></iframe>
+                <script>
+                let kiosk=false;
+                const properties={type:'home-assistant/properties',route:{
+                  prefix:'/app/local_camera_daily_merger',path:'/dashboard/day/2026-11-11'}};
+                addEventListener('message',e=>{
+                  if(e.source!==document.querySelector('iframe').contentWindow || e.origin!==location.origin)return;
+                  if(e.data.type==='home-assistant/subscribe-properties'){
+                    kiosk=e.data.kioskMode===true;
+                    e.source.postMessage(properties,location.origin);
+                  }
+                });
+                </script></body>""",
+                ),
+            )
+            page.goto(url + "/native-panel-test")
+            frame = page.frame_locator("iframe")
+            expect(frame.locator("#gallery-title")).to_have_text(
+                "All cameras · 2026-11-11"
+            )
+            expect(frame.locator("header")).not_to_be_visible()
+            expect(frame.locator("#native-latest-url")).to_have_value(
+                "/app/local_camera_daily_merger/dashboard/latest"
+            )
+            page.wait_for_function("() => kiosk")
+            frame.get_by_role("button", name="Play all", exact=True).click()
+            page.wait_for_function(
+                "() => [...document.querySelector('iframe').contentDocument.querySelectorAll('#gallery-grid video')].every(v=>v.readyState>=2 && !v.paused)"
+            )
+            frame.get_by_role("button", name="Pause all", exact=True).click()
+            frame.locator("#gallery-day").fill("2026-11-12")
+            frame.locator("#gallery-day").press("Tab")
+            # Repeated properties (e.g. resize) must preserve the user's date.
+            page.evaluate(
+                "document.querySelector('iframe').contentWindow.postMessage(properties,location.origin)"
+            )
+            expect(frame.locator("#gallery-title")).to_have_text(
+                "All cameras · 2026-11-12"
+            )
+            page.evaluate(
+                "document.querySelector('iframe').contentWindow.postMessage({...properties,route:{prefix:'https://invalid.example',path:'/dashboard/latest'}},location.origin)"
+            )
+            expect(frame.locator("#gallery-title")).to_have_text(
+                "All cameras · 2026-11-12"
+            )
+            # A same-origin child cannot impersonate the HA parent.
+            frame.locator("body").evaluate(
+                "body => window.dispatchEvent(new MessageEvent('message',{origin:location.origin,source:window,data:{type:'home-assistant/properties',route:{prefix:'/app/local_camera_daily_merger',path:'/dashboard/latest'}}}))"
+            )
+            expect(frame.locator("#gallery-title")).to_have_text(
+                "All cameras · 2026-11-12"
+            )
+            page.evaluate(
+                "properties.route.path='/dashboard/latest'; document.querySelector('iframe').contentWindow.postMessage(properties,location.origin)"
+            )
+            expect(frame.locator("#gallery-title")).to_have_text("Latest per camera")
+            expect(frame.locator("#gallery-grid video")).to_have_count(2)
             assert not errors, errors
             browser.close()
             print(

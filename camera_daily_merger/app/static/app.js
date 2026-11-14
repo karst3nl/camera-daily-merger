@@ -148,3 +148,9 @@ window.addEventListener('hashchange',()=>{const parameters=new URLSearchParams(l
 el('gallery-back').addEventListener('click',()=>selectView('latest'));
 
 el('dashboard-help').addEventListener('click',()=>{const setup=document.querySelector('.dashboard-setup');setup.open=true;setup.scrollIntoView({block:'start',behavior:'smooth'});});
+
+// Called only by the same-origin Home Assistant properties bridge.
+function nativeDashboardView(view, day) {
+  embedded=true;document.body.classList.add('embedded');
+  selectView(view,day);
+}

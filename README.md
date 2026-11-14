@@ -32,7 +32,7 @@ operation remain unverified. This is not a production-ready add-on.
 Project code and documentation use the [MIT license](LICENSE). Third-party
 software retains its own licenses; see [dependency notices](docs/THIRD_PARTY.md).
 
-Current add-on snapshot: **0.1.0-alpha.9**. Install the alpha repository using
+Current add-on snapshot: **0.1.0-alpha.10**. Install the alpha repository using
 `https://github.com/karst3nl/camera-daily-merger#alpha`; see setup for verified
 branch-selector behavior and device-test limitations. Configure sources in the
 Home Assistant Configuration tab; empty defaults do not process media.
@@ -42,8 +42,8 @@ and [security model](docs/SECURITY.md). Important initial limits include 256 cli
 per job, conservative MP4 codec matching, and retained output versions consuming
 extra storage. Real-device acceptance is blocked pending owner input/results.
 
-Alpha.9 adds **Latest per camera** and **All cameras by day**, with shared
-play/pause controls and a local Home Assistant dashboard card. Open **Dashboard
-setup** in the app to download the resource, then follow the
-[dashboard guide](docs/DASHBOARD.md). The card uses authenticated ingress sessions;
-no permanent session URL, public video port or cloud runtime script is needed.
+Alpha.10 embeds **Latest per camera** and **All cameras by day** in the normal
+Home Assistant **Webpage** card. Open **Dashboard setup** in the app for stable
+URLs and follow the [dashboard guide](docs/DASHBOARD.md). No file copies, custom
+resources or YAML are required. Home Assistant manages authenticated ingress;
+recordings are streamed directly from existing exports.

@@ -183,3 +183,11 @@ The resource is copied once to HA www by the owner and served locally, avoiding
 internet runtime dependencies. Its embedded view is a read-only video surface,
 not a separate authentication boundary: HA's existing app access policy still
 controls every request. Internal collection/file access gates remain unchanged.
+
+## Native dashboard bridge
+
+The built-in Webpage card loads a stable HA app route. HA owns session creation
+and renewal; the add-on reads same-origin parent properties through the official
+ingress postMessage protocol and requests kiosk mode only for dashboard routes.
+Validated route prefixes generate installation-specific setup URLs. Repeated
+properties do not reset selected dates. No processing or media copy is required.
