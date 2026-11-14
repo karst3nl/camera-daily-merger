@@ -59,4 +59,87 @@ el('reprocess').addEventListener('click',async()=>{
     await refresh();
   } catch(e) {el('message').textContent=e.message;} finally {el('reprocess').disabled=false;}
 });
-refresh().catch(e=>el('message').textContent=e.message);
+
+let galleryView='latest', galleryDay=null, gallerySignature=null, galleryBusy=false, galleryRevision=0, pendingGallery=false, galleryDates=[];
+const initial=new URLSearchParams(location.hash.slice(1));
+let embedded=initial.get('embed')==='1';
+document.body.classList.toggle('embedded',embedded);
+function galleryPlayers(){return [...el('gallery-grid').querySelectorAll('video')];}
+function stopGallery(){for(const video of galleryPlayers()){video.pause();video.removeAttribute('src');video.load();}}
+function galleryQuery(){const query=new URLSearchParams({view:galleryView});if(galleryView==='day' && galleryDay)query.set('day',galleryDay);return query.toString();}
+function selectView(view,day=null,writeHash=true){
+  stopGallery();galleryView=['latest','day','manage'].includes(view)?view:'latest';
+  if(embedded && galleryView==='manage')galleryView='latest';
+  galleryDay=day;gallerySignature=null;pendingGallery=false;galleryRevision++;
+  el('management').hidden=galleryView!=='manage';el('gallery-panel').hidden=galleryView==='manage';
+  for(const mode of ['latest','day','manage'])el(`view-${mode}`).setAttribute('aria-pressed',String(galleryView===mode));
+  if(writeHash){const hash=new URLSearchParams({view:galleryView});if(embedded)hash.set('embed','1');if(galleryDay)hash.set('day',galleryDay);history.replaceState(null,'','#'+hash);}
+  if(galleryView!=='manage')refreshGallery(true);
+}
+function durationLabel(value){const total=Math.round(value);return `${Math.floor(total/60)} min ${String(total%60).padStart(2,'0')} sec`;}
+function renderCollection(data){
+  stopGallery();el('gallery-grid').replaceChildren();
+  el('gallery-title').textContent=galleryView==='latest'?'Latest per camera':`All cameras · ${data.day || 'select a date'}`;
+  el('gallery-description').textContent=galleryView==='latest'?'Each camera shows its own most recent published day. Dates can differ.':'All available daily exports for the selected date.';
+  const isDay=galleryView==='day';
+  for(const id of ['gallery-date-control','gallery-previous','gallery-next'])el(id).hidden=!isDay;
+  el('gallery-day').value=data.day || '';
+  const position=galleryDates.indexOf(data.day);
+  el('gallery-previous').disabled=position<0 || position>=galleryDates.length-1;
+  el('gallery-next').disabled=position<=0;
+  let available=0;
+  for(const item of data.videos){
+    const tile=document.createElement('article');tile.className='camera-tile';tile.dataset.camera=item.camera;
+    const title=document.createElement('h3');title.textContent=item.camera;
+    const day=document.createElement('p');day.className='tile-date';day.textContent=item.day || 'No export yet';
+    tile.append(title,day);
+    if(item.available){
+      available++;
+      const video=document.createElement('video');video.controls=true;video.preload='none';video.muted=true;video.playsInline=true;video.src=item.video_url;video.setAttribute('aria-label',`${item.camera} · ${item.day}`);
+      const warning=document.createElement('p');warning.className='tile-warning';warning.hidden=true;warning.textContent='Playback unavailable. H.265 support varies; try a compatible player or refresh if the export changed.';
+      video.addEventListener('error',()=>warning.hidden=false);
+      const metadata=document.createElement('p');metadata.className='tile-meta';metadata.textContent=durationLabel(item.duration)+(item.previous_export?' · Previous successful export; current job '+item.job_status:'');
+      const links=document.createElement('div');links.className='tile-links';
+      const download=document.createElement('a');download.href=item.download_url;download.textContent='Download MP4';download.setAttribute('download','');links.append(download);
+      if(galleryView==='latest'){const together=document.createElement('button');together.className='secondary';together.textContent='All cameras on this day';together.addEventListener('click',()=>selectView('day',item.day));links.append(together);}
+      tile.append(video,warning,metadata,links);
+    }else{const empty=document.createElement('p');empty.className='tile-empty';empty.textContent=item.unavailable_reason || (item.job_status?`No completed export · ${item.job_status}`:'No completed export for this camera/date.');tile.append(empty);}
+    el('gallery-grid').append(tile);
+  }
+  if(!data.videos.length){const empty=document.createElement('p');empty.textContent='Configure camera sources to show daily recordings.';el('gallery-grid').append(empty);}
+  el('gallery-play').disabled=available===0 || available>6;
+  el('gallery-play').title=available>6?'Use individual controls for up to six cameras at a time.':'';
+  el('gallery-pause').disabled=available===0;
+  el('gallery-message').textContent='';
+}
+async function refreshGallery(force=false){
+  if(galleryBusy || galleryView==='manage')return;
+  galleryBusy=true;const revision=galleryRevision;const query=galleryQuery();
+  try{
+    const data=await api('videos?'+query);
+    if(revision!==galleryRevision)return;
+    galleryDates=data.dates;
+    const signature=JSON.stringify(data.videos);
+    if(!force && signature===gallerySignature)return;
+    if(!force && galleryPlayers().some(video=>!video.paused && !video.ended)){
+      pendingGallery=true;el('gallery-message').textContent='New exports are ready. Pause playback or refresh to load them.';return;
+    }
+    renderCollection(data);gallerySignature=signature;pendingGallery=false;
+  }catch(error){el('gallery-message').textContent=error.message;}
+  finally{galleryBusy=false;if(revision!==galleryRevision && galleryView!=='manage')refreshGallery(true);}
+}
+for(const view of ['latest','day','manage'])el(`view-${view}`).addEventListener('click',()=>selectView(view));
+el('gallery-day').addEventListener('change',()=>selectView('day',el('gallery-day').value || null));
+el('gallery-previous').addEventListener('click',()=>{const n=galleryDates.indexOf(el('gallery-day').value);if(n>=0 && n+1<galleryDates.length)selectView('day',galleryDates[n+1]);});
+el('gallery-next').addEventListener('click',()=>{const n=galleryDates.indexOf(el('gallery-day').value);if(n>0)selectView('day',galleryDates[n-1]);});
+el('gallery-refresh').addEventListener('click',()=>refreshGallery(true));
+el('gallery-pause').addEventListener('click',()=>{for(const video of galleryPlayers())video.pause();if(pendingGallery)refreshGallery(true);});
+el('gallery-play').addEventListener('click',async()=>{
+  const results=await Promise.allSettled(galleryPlayers().map(video=>{video.muted=true;return video.play();}));
+  if(results.some(result=>result.status==='rejected'))el('gallery-message').textContent='Some videos could not start; use their individual controls or downloads.';
+});
+selectView(initial.get('view') || 'latest',initial.get('day'),false);
+refresh().catch(error=>el('message').textContent=error.message);
+setInterval(()=>{if(!document.hidden && galleryView!=='manage')refreshGallery();},60000);
+
+window.addEventListener('hashchange',()=>{const parameters=new URLSearchParams(location.hash.slice(1));embedded=parameters.get('embed')==='1';document.body.classList.toggle('embedded',embedded);selectView(parameters.get('view') || 'latest',parameters.get('day'),false);});

@@ -6,7 +6,7 @@ import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import re
 import secrets
 import socket
@@ -14,10 +14,11 @@ import threading
 from urllib.parse import parse_qs, urlsplit
 
 from . import APP_VERSION
+from .catalog import collection
 from .persistence import Store
 from .scheduler import Scheduler
 from .settings import Settings
-from .storage import directory, open_relative
+from .storage import open_export
 
 STATIC = Path(__file__).parent / "static"
 
@@ -37,7 +38,8 @@ class BoundedServer(ThreadingHTTPServer):
     daemon_threads = True
 
     def __init__(self, *args):
-        self.slots = threading.BoundedSemaphore(4)
+        self.slots = threading.BoundedSemaphore(8)
+        self.media_slots = threading.BoundedSemaphore(6)
         super().__init__(*args)
 
     def handle_error(self, request, client_address):
@@ -131,6 +133,24 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                         "diagnostics": store.metadata("scan_diagnostics") or [],
                     },
                 )
+            elif path == "/api/videos":
+                try:
+                    query = parse_qs(parsed.query, keep_blank_values=True)
+                    if set(query) - {"view", "day"} or any(
+                        len(v) != 1 for v in query.values()
+                    ):
+                        raise ValueError
+                    self.reply(
+                        200,
+                        collection(
+                            store,
+                            settings,
+                            view=query.get("view", ["latest"])[0],
+                            day=query.get("day", [None])[0],
+                        ),
+                    )
+                except (ValueError, TypeError):
+                    self.reply(400, {"error": "Invalid collection request"})
             elif path == "/api/jobs":
                 rows = []
                 for row in store.list():
@@ -155,7 +175,13 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                         )
                 self.reply(200, rows)
             elif path.startswith("/video/"):
-                self.video(path, parsed.query)
+                if not self.server.media_slots.acquire(blocking=False):
+                    self.reply(503, {"error": "Too many simultaneous video streams"})
+                else:
+                    try:
+                        self.video(path, parsed.query)
+                    finally:
+                        self.server.media_slots.release()
             else:
                 self.reply(404, {"error": "Not found"})
 
@@ -205,21 +231,20 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                 if not row or not row["output"]:
                     raise ValueError
                 output = json.loads(row["output"])
-                expected_parent = PurePosixPath(settings.output) / camera
-                relative = PurePosixPath(output["path"])
-                if relative.parent != expected_parent or not re.fullmatch(
-                    re.escape(day) + r"-[0-9a-f]{32}\.mp4", relative.name
+                parameters = parse_qs(query, keep_blank_values=True)
+                if set(parameters) - {"v", "download"} or (
+                    "v" in parameters and parameters["v"] != [output["sha256"]]
                 ):
                     raise ValueError
-                with (
-                    directory(settings.root) as root,
-                    open_relative(root, output["path"]) as source,
-                ):
+                with open_export(settings, camera, day, output) as source:
                     size = os.fstat(source).st_size
                     if size != output["size"]:
                         raise ValueError
                     start, end = 0, size - 1
+                    etag = '"' + output["sha256"] + '"'
                     header = self.headers.get("Range")
+                    if self.headers.get("If-Range") not in (None, etag):
+                        header = None
                     if header:
                         requested = re.fullmatch(r"bytes=(\d*)-(\d*)", header)
                         if not requested or not any(requested.groups()):
@@ -238,6 +263,7 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                     self.send_response(206 if header else 200)
                     self.send_header("Content-Type", "video/mp4")
                     self.send_header("Accept-Ranges", "bytes")
+                    self.send_header("ETag", etag)
                     self.send_header("Content-Length", str(end - start + 1))
                     if header:
                         self.send_header("Content-Range", f"bytes {start}-{end}/{size}")

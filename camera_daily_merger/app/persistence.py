@@ -212,3 +212,35 @@ class Store:
                 "UPDATE jobs SET output=? WHERE camera=? AND day=? AND output=?",
                 (json.dumps(metadata), row["camera"], row["day"], row["output"]),
             )
+
+    def gallery_rows(self, cameras, day=None):
+        """Small indexed lookups; do not load source manifests or truncate by job history."""
+        if not cameras:
+            return [], []
+        with self.transaction() as db:
+            placeholders = ",".join("?" for _ in cameras)
+            dates = [
+                row[0]
+                for row in db.execute(
+                    f"SELECT DISTINCT day FROM jobs WHERE output IS NOT NULL AND camera IN ({placeholders}) ORDER BY day DESC LIMIT 366",
+                    tuple(cameras),
+                )
+            ]
+            rows = []
+            for camera in cameras:
+                if day is None:
+                    row = db.execute(
+                        "SELECT camera,day,status,output FROM jobs WHERE camera=? AND output IS NOT NULL ORDER BY day DESC LIMIT 1",
+                        (camera,),
+                    ).fetchone()
+                else:
+                    row = db.execute(
+                        "SELECT camera,day,status,output FROM jobs WHERE camera=? AND day=?",
+                        (camera, day),
+                    ).fetchone()
+                rows.append(
+                    dict(row)
+                    if row
+                    else {"camera": camera, "day": day, "status": None, "output": None}
+                )
+            return rows, dates

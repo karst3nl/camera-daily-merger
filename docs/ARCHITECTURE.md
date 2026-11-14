@@ -150,3 +150,20 @@ FFmpeg command. Synthetic fixture preparation retimes a separate generated copy
 with setts to reproduce 20/1 vs 239/12 and irregular DTS spacing without changing
 encoded headers; setts is never used by the runtime merger. Packet hashes, decoded
 frame hashes and PTS/DTS/durations establish preservation in these regressions.
+
+Dashboard extension step 1 adds indexed per-camera current-export lookups rather
+than deriving latest videos from the truncated 1,000-job history. Galleries use
+metadata plus safe output opens/size checks, with no source scan or full-file hash
+on polling. Date navigation lists up to 366 exported dates; explicit date lookup
+can address older days. Failed rebuilds retain their prior successful export.
+Missing/unsafe latest files are marked unavailable instead of silently substituting
+an older date. Version query pins reject a stale current-output hash; ETag and
+If-Range prevent byte-range mixing when a retry publishes a new version.
+
+The gallery polls every 60 seconds only while visible; new data does not replace
+actively playing players until pause/refresh. Videos preload none and do not
+start automatically. Browsers decode each stream; the add-on does not render or
+transcode a mosaic. Play-all is available up to six videos; individual controls
+remain available for larger collections. HTTP workers increase from four to eight,
+with at most six media handlers so two workers remain available for metadata.
+Each media handler retains the 64 KiB streaming buffer and original access gates.

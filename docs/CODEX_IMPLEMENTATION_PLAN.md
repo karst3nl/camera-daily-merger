@@ -247,3 +247,12 @@ Phase 7 / alpha.8: classify derived video r_frame_rate as informational after
 synthetic packet/frame/timing-preservation evidence for matching codec headers
 and timebases with different frame-rate estimates. Apply the same comparison at
 input and output validation. All other required stream fields remain strict.
+
+## Authorized dashboard extension
+
+After owner-reported successful alpha.8 processing, add (1) latest-per-camera and
+same-date multi-camera views with read-only collection APIs, then (2) a local
+Lovelace card using authenticated Home Assistant ingress sessions. Test/commit
+these independently on alpha. Multi-player controls do not imply wall-clock
+synchronization because motion-free periods are absent from the exports. Preserve
+no-public-port access, source immutability and bounded Raspberry Pi resources.

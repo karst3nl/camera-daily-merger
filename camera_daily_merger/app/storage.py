@@ -69,3 +69,28 @@ def writable_directory(root_fd: int, path: str):
         yield descriptor
     finally:
         os.close(descriptor)
+
+
+@contextmanager
+def open_export(settings, camera: str, day: str, metadata: dict):
+    """Open only a DB-managed immutable export, with matching size."""
+    from datetime import date
+    from pathlib import PurePosixPath
+    import re
+
+    if date.fromisoformat(day).isoformat() != day:
+        raise ValueError("Invalid export date")
+    relative = PurePosixPath(metadata["path"])
+    if relative.parent != PurePosixPath(settings.output) / camera or not re.fullmatch(
+        re.escape(day) + r"-[0-9a-f]{32}\.mp4", relative.name
+    ):
+        raise ValueError("Invalid managed export")
+    if not isinstance(metadata["size"], int) or metadata["size"] <= 0:
+        raise ValueError("Invalid export size")
+    with (
+        directory(settings.root) as root,
+        open_relative(root, metadata["path"]) as source,
+    ):
+        if os.fstat(source).st_size != metadata["size"]:
+            raise ValueError("Output size changed")
+        yield source

@@ -542,3 +542,30 @@ mixed-rate day automatically and preserved packet hashes/source hashes, restart
 idempotency and graceful shutdown. The mixed-rate variant is now in hosted CI.
 Actual owner-side export after updating is NOT RUN / BLOCKED pending confirmation;
 no real media was opened here and full device acceptance remains outstanding.
+
+## Dashboard extension — step 1, collection views
+
+Owner reports alpha.8 appears to work and requests latest-per-camera dashboard
+videos plus a same-date multi-camera view. Added read-only collection queries,
+latest/common-day galleries, shared controls and embedded mode. A published prior
+output remains visible during a failed rebuild. No source scanning, transcoding,
+public listener mapping or original-file changes are introduced.
+
+Commands: `.venv/bin/ruff format .`, `.venv/bin/ruff check .`,
+`.venv/bin/python -m pytest`, `.venv/bin/python -m tests.integration.check_gallery_browser`,
+`.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium`,
+`.venv/bin/python work/scan.py`, `git diff --check`.
+
+Results: 94 tests passed, 0 failed. New APIs cover per-camera differing dates,
+common-date selection, no outputs, retained prior exports, more than 1,000 unrelated
+jobs, missing/linked files, stale version rejection, If-Range and denied peers/
+invalid queries. New real synthetic browser checks passed on desktop/mobile for
+latest dates, missing camera state, no initial video requests, play/pause all,
+non-disruptive refresh, date selection and embedded mode; screenshots reviewed.
+The initial embedded hash-navigation assertion found a missing hashchange handler;
+fixed and both browser suites rerun successfully. Existing processing, security,
+source-preservation and compatibility tests still pass.
+
+Actual Lovelace integration is the next independent step, not yet verified on
+owner HA. Full HA OS/NAS/Pi acceptance remains incomplete despite successful
+owner-reported processing. No merge or push to main.

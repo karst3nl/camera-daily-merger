@@ -41,6 +41,7 @@ def main():
             errors = []
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(f"http://127.0.0.1:{server.server_address[1]}/")
+            page.get_by_role("button", name="Processing & single camera").click()
             page.get_by_text("a · 2026-11-12", exact=True).wait_for()
             page.locator("#camera").select_option("a")
             page.locator("#day").fill(str(DAY))
