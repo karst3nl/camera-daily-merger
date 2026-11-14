@@ -1,7 +1,8 @@
-# Alpha installation
+# Installation and upgrade
 
-This alpha implements synthetic-tested merging, scheduling and a web interface.
-Real Home Assistant/NAS operation remains unverified. The interface uses ingress;
+Version 0.1.0 includes merging, scheduling and the compact 2×2 camera interface.
+The owner confirmed core live operation; extended fault/hardware checks remain
+open in ACCEPTANCE.md. The app remains experimental in metadata. It uses ingress;
 no host ports, privileged mode or Supervisor API access is enabled.
 
 ## Install from alpha
@@ -13,11 +14,12 @@ open the repositories menu and add:
 https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
-Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.14 or newer from alpha. The `#alpha` selector is important:
+Reload the store, select Camera Daily Merger and install the build from alpha. Confirm
+version 0.1.0 from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
-HA store installation flow still requires device acceptance. This corrects the
+HA store installation was owner-reported successful; architecture/version details
+were not supplied. This corrects the
 earlier bootstrap instructions that only described a local-copy installation.
 
 If a local add-on installation is preferred, copy camera_daily_merger from an
@@ -37,11 +39,12 @@ Media usage and configure NAS_HOST/share/credentials locally. Expected source
 path /media/reolink must be checked on the real installation; Synology internal
 paths are not container paths. Restrict NAS credentials where possible; the
 media mount itself is writable, so application path confinement remains essential.
-This bootstrap never writes to media.
+Only dedicated output/staging paths are written; original clips stay read-only.
 
 Check logs for “Worker ready” after source configuration; stop/restart and check
 “Shutdown complete”. Without configuration the UI explains that setup is required.
-Actual HA OS installation, mount exposure and Pi 4 operation are NOT VERIFIED.
+The owner confirms core live operation; exact device versions, mount behavior after
+a full host reboot and Pi hardware measurements remain unverified.
 
 Configuration reference checked 2026-11-13:
 https://developers.home-assistant.io/docs/add-ons/configuration/
@@ -50,8 +53,8 @@ It documents aarch64, application startup, Docker init, automatic /data and
 media map entries with read_only. Full Supervisor schema validation and actual
 installation remain separate acceptance checks.
 
-The current add-on linter and ARM64-emulated startup tests pass. Native Pi 4 and
-Home Assistant OS installation are still unverified. Configuration omits default
+The current add-on linter and ARM64-emulated startup tests pass. Core installation
+is owner-confirmed; extended native Pi 4 fault/performance checks remain open. Configuration omits default
 startup/boot/init/options/schema values as required by the current linter.
 
 ## Synthetic discovery dry-run
@@ -270,3 +273,14 @@ No file copies, custom resources or YAML are required. Follow the
 [dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md).
 Home Assistant manages ingress authentication. Actual owner-device dashboard
 acceptance remains to be verified.
+
+## Upgrade from alpha.14 to 0.1.0
+
+Save a paired app/state backup and back up NAS storage separately. Reload the
+repository, update the existing app (do not uninstall), and restart. No new options
+or database schema change is introduced. Existing camera mappings, successful
+exports, history and browser layout v3 remain intact. Refresh the browser once.
+Open Processing to confirm version 0.1.0, then check all four camera tiles, seeking,
+zoom and the next scheduled daily run. Follow OPERATIONS.md for paired rollback;
+never delete the database or original recordings to resolve an upgrade issue.
+See RELEASE_0.1.0.md for the exact qualification scope.

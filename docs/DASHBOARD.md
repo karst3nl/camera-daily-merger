@@ -1,6 +1,6 @@
 # Native Home Assistant dashboard
 
-Current version: **0.1.0-alpha.14**. No recording copies, JavaScript installation,
+Current version: **0.1.0**. No recording copies, JavaScript installation,
 custom resources or YAML are required.
 
 1. Update and restart the add-on, then open its web UI through Home Assistant.

@@ -164,7 +164,7 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                         "version": APP_VERSION,
                         "cameras": sorted(settings.cameras) if settings else [],
                         "csrf": csrf,
-                        "verification": "Synthetic tests only; real HA OS/NAS unverified",
+                        "verification": "Local processing; original recordings are retained",
                         "diagnostics": store.metadata("scan_diagnostics") or [],
                     },
                 )

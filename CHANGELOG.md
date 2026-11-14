@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0
+
+- Owner-requested source version after confirmation of scheduled daily processing,
+  multi-camera playback, app restart recovery and unchanged originals.
+- Align add-on, app API and Python package versions from one authoritative value.
+- Preserve alpha.14's fixed 2×2 dashboard, zoom, options, schema and source safety.
+- Document upgrade/rollback and distinguish core live confirmation from remaining
+  extended hardware/fault qualification. Experimental metadata remains intentional.
+- No main merge, published binary image or deployment is included.
+
 ## Unreleased — alpha
 
 - Phase 0: Python 3.12 package bootstrap, pinned development tools, CI lint,

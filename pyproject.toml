@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "camera-daily-merger"
-version = "0.1.0a0"
+dynamic = ["version"]
 description = "Lossless daily camera recording merger for Home Assistant"
 requires-python = ">=3.12"
 license = {file = "LICENSE"}
@@ -24,3 +24,6 @@ target-version = "py312"
 
 [tool.setuptools.package-data]
 "camera_daily_merger.app" = ["static/*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "camera_daily_merger.app.APP_VERSION"}

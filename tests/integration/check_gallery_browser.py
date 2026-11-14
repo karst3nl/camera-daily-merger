@@ -286,7 +286,7 @@ def main():
             def assert_auto_fit(width, height):
                 page.set_viewport_size({"width": width, "height": height})
                 page.wait_for_function(
-                    "() => {const g=document.querySelector('#gallery-grid'),b=g.getBoundingClientRect();return g.dataset.fitViewportWidth===String(innerWidth) && g.dataset.fitViewportHeight===String(innerHeight) && b.bottom<=innerHeight && b.right<=innerWidth;}"
+                    "() => {const g=document.querySelector('#gallery-grid'),b=g.getBoundingClientRect();return !galleryBusy && g.dataset.fitViewportWidth===String(innerWidth) && g.dataset.fitViewportHeight===String(innerHeight) && b.bottom<=innerHeight && b.right<=innerWidth;}"
                 )
                 tiles = [
                     tile.bounding_box() for tile in page.locator(".camera-tile").all()
@@ -380,9 +380,14 @@ def main():
             page.get_by_label("Columns", exact=True).select_option("2")
 
             def equal_windows():
-                boxes = [
-                    tile.bounding_box() for tile in page.locator(".camera-tile").all()
-                ]
+                # A date/view fetch can replace all tiles between Playwright calls.
+                # Wait for completion and read geometry in one browser task.
+                page.wait_for_function(
+                    "() => !galleryBusy && document.querySelectorAll('.camera-tile').length===4"
+                )
+                boxes = page.locator(".camera-tile").evaluate_all(
+                    "tiles=>tiles.map(tile=>{const {x,y,width,height}=tile.getBoundingClientRect();return {x,y,width,height};})"
+                )
                 assert len(boxes) == 4
                 assert (
                     max(b["width"] for b in boxes) - min(b["width"] for b in boxes) < 1

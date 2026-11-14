@@ -1,7 +1,7 @@
 name: Camera Daily Merger
-version: 0.1.0-alpha.14
+version: 0.1.0
 slug: camera_daily_merger
-description: Lossless daily camera exports (alpha; real NAS acceptance pending)
+description: Lossless daily camera exports and a local 2x2 surveillance dashboard
 url: https://github.com/karst3nl/camera-daily-merger
 arch:
   - aarch64

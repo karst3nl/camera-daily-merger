@@ -17,3 +17,17 @@ def test_addon_license_and_notices_match_repository():
     assert (root / "docs/THIRD_PARTY.md").read_bytes() == (
         root / "camera_daily_merger/THIRD_PARTY.md"
     ).read_bytes()
+
+
+def test_addon_runtime_and_package_versions_agree():
+    from pathlib import Path
+    import tomllib
+
+    from camera_daily_merger.app import APP_VERSION
+
+    root = Path(__file__).resolve().parents[2]
+    config = (root / "camera_daily_merger/config.yaml").read_text()
+    assert f"\nversion: {APP_VERSION}\n" in config
+    assert APP_VERSION == __version__ == version("camera-daily-merger")
+    metadata = tomllib.loads((root / "pyproject.toml").read_text())
+    assert metadata["project"]["dynamic"] == ["version"]

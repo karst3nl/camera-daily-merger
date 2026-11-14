@@ -806,3 +806,64 @@ large camera counts or expanded manual settings still need physical room for lab
 and controls; verified scroll freedom applies to the normal four-camera automatic
 view at the tested sizes. No hidden cameras, transcoding or recording copies. Phase
 7 acceptance stays open; main unchanged.
+
+## 0.1.0 source finalization and owner-confirmed core live workflow
+
+The owner reported alpha.14 working well and requested a final version. Asked
+specifically about automatic 00:15 processing, full multi-camera videos viewed at
+beginning/middle/end, restart with continued processing and unchanged originals,
+the owner answered affirmatively to that bundled question. These are recorded as
+owner reports, not independently collected logs, hashes or hardware measurements.
+
+Prepared source version 0.1.0 on alpha. Unified package/runtime/add-on metadata
+from APP_VERSION; removed stale alpha-only UI text without changing options,
+schema v2, browser layout v3 or processing/storage behavior. Kept experimental app
+metadata because extended qualification remains incomplete. Added explicit release
+scope, update/rollback notes and a real image-to-image upgrade check.
+
+Validation and exact commands:
+
+- `.venv/bin/ruff check .`, `.venv/bin/ruff format --check .` and
+  `git diff --check`: passed.
+- `.venv/bin/python -m pytest`: 98 passed, 0 failed. Includes version consistency,
+  source/path safety, crash recovery, migration, compatibility, scheduling/DST,
+  output-version integrity and HTTP regressions.
+- `.venv/bin/python -m build` and `.venv/bin/python -m pip check`: passed.
+  Installed dist/camera_daily_merger-0.1.0-py3-none-any.whl with --no-deps in a clean
+  work/release-wheel-env virtualenv. Its isolated `python -I` verified installed
+  package/API version 0.1.0 and all six required dashboard resources.
+- `.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium`,
+  `.venv/bin/python -m tests.integration.check_gallery_browser --chromium /usr/bin/chromium`
+  and `.venv/bin/python -m tests.integration.check_dashboard_card --chromium /usr/bin/chromium`:
+  all passed. Repeated all three with Playwright 1.57's bundled Chromium 143,
+  matching CI's executable selection; all passed after the test correction below.
+- Native AMD64 and ARM64 add-on images built successfully with the pinned Dockerfile.
+- `.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:release-amd64`:
+  passed health/restart/shutdown/source preservation.
+- `.venv/bin/python tests/integration/check_container.py --image camera-daily-merger:release-arm64 --qemu work/qemu-aarch64-static`:
+  passed emulated ARM64 health/restart/shutdown/source preservation. This is not a
+  native Pi benchmark or an ARM64 FFmpeg media-pipeline test.
+- `.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:release-amd64 --compact --mixed-rate`
+  and the same command with `--compact --archived-dst`: passed automatic merge,
+  version selection, restart, shutdown, unchanged sources and packet preservation.
+- `.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64 --upgrade-image camera-daily-merger:release-amd64 --compact --mixed-rate`:
+  passed real image replacement from alpha.14 to 0.1.0 with the same state/media,
+  unchanged job/attempt/output metadata, exact output digest, unchanged originals
+  and healthy new service. The new digest assertion initially encountered host
+  permissions on the container-owned synthetic export; reading the checksum inside
+  the test container fixed the harness without changing source/output permissions.
+- `.venv/bin/python work/scan.py`: passed heuristic private-address/secret/media
+  scan. MIT license and third-party notices remain unchanged.
+
+Previous head f1d0dc2 had green Python/container CI but failed browser CI run
+43583838684. Downloading logs was forbidden, so the failure was reproduced locally
+with CI's exact Playwright browser. The test read sequential tile bounding boxes
+while a day-view fetch replaced the DOM, producing a transient null bounding box.
+It now waits for the fetch and takes an atomic geometry snapshot; the complete
+bundled-browser suite passes. No application behavior was altered for this fix.
+The hosted 0.1.0 commit's CI outcome is reported separately.
+
+Extended Phase 7 remains open: NAS outage, power loss, paired backup restoration,
+real DST/codec variants, independently supplied source audits and Pi performance
+metrics are not available. No universal perfection/production-qualification claim,
+main merge, release tag, binary image publication or automatic deployment is made.

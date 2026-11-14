@@ -16,6 +16,10 @@ from zoneinfo import ZoneInfo
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--image", required=True)
+    parser.add_argument(
+        "--upgrade-image",
+        help="Replace the initial image after a successful merge, preserving state/media",
+    )
     parser.add_argument("--compact", action="store_true")
     parser.add_argument("--archived-dst", action="store_true")
     parser.add_argument("--mixed-rate", action="store_true")
@@ -171,8 +175,51 @@ def main():
                 assert packet_hashes(output["path"]) == packet_hashes(
                     "input/" + source.name
                 ) + packet_hashes("input/" + second.name)
-            docker("restart", name)
+            if args.upgrade_image:
+                before_version = docker(
+                    "exec",
+                    name,
+                    "python",
+                    "-c",
+                    "from app import APP_VERSION; print(APP_VERSION)",
+                ).stdout.strip()
+                docker("stop", "-t", "5", name)
+                docker("rm", name)
+                docker(
+                    "run",
+                    "-d",
+                    "--name",
+                    name,
+                    "--mount",
+                    f"type=bind,src={data},dst=/data",
+                    "--mount",
+                    f"type=bind,src={media},dst=/media",
+                    args.upgrade_image,
+                )
+                after_version = docker(
+                    "exec",
+                    name,
+                    "python",
+                    "-c",
+                    "from app import APP_VERSION; print(APP_VERSION)",
+                ).stdout.strip()
+                assert before_version != after_version, (
+                    "Upgrade requires distinct app versions"
+                )
+            else:
+                docker("restart", name)
             time.sleep(1)
+            docker("exec", name, "python", "-m", "app.main", "--healthcheck")
+            actual_digest = docker(
+                "exec",
+                name,
+                "python",
+                "-c",
+                "import hashlib,sys; from pathlib import Path; "
+                "print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())",
+                f"/media/{output['path']}",
+            ).stdout.strip()
+            assert actual_digest == output["sha256"]
             docker("stop", "-t", "5", name)
             with sqlite3.connect(data / "jobs.sqlite") as db:
                 after = db.execute(
@@ -188,6 +235,10 @@ def main():
                 docker("inspect", "-f", "{{.State.ExitCode}}", name).stdout.strip()
                 == "0"
             )
+            if args.upgrade_image:
+                print(
+                    "PASS: image upgrade preserved job state, export bytes and originals"
+                )
             print(
                 "PASS: automatic merge, current output, restart idempotency, graceful shutdown, source hash"
             )

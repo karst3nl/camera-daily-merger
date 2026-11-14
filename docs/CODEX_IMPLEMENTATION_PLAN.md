@@ -297,3 +297,12 @@ image aspect ratio and wrap external controls without horizontal scrolling. Move
 setup out of camera views and compact navigation. Verify latest/day desktop,
 portrait, landscape and embedded layouts with page/control scroll dimensions and
 visible control bounds, plus existing regression/pipeline gates before publishing.
+
+## Owner-requested 0.1.0 finalization
+
+The owner confirmed the four bundled core live checks after alpha.14 and requested
+a final version. Prepare 0.1.0 source on alpha, align package/runtime/add-on version
+metadata, preserve the tested UI/options/schema, and run native/ARM64 smoke plus
+all automated gates. Record owner reports separately from independent evidence.
+Keep experimental metadata and extended Phase 7 tasks open; no main merge, binary
+publication or claim of universal production qualification is authorized.

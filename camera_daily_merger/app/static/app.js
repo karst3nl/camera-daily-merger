@@ -17,7 +17,7 @@ function diagnosticText(d) {
 }
 async function refresh() {
   const status = await api('status'); csrf = status.csrf;
-  el('verification').textContent = `${status.version || 'Alpha'} · ${status.verification}`;
+  el('verification').textContent = `${status.version || 'Camera Daily Merger'} · ${status.verification}`;
   const selected = el('camera').value;
   el('camera').replaceChildren(...status.cameras.map(name => {const o=document.createElement('option');o.value=name;o.textContent=name;return o;}));
   if (status.cameras.includes(selected)) el('camera').value=selected;

@@ -1,12 +1,14 @@
-# Camera Daily Merger — Alpha
+# Camera Daily Merger — 0.1.0
 
 Join each camera's previous local day using FFmpeg stream copy. Original
 recordings stay untouched. Configure camera folders and a verified timestamp
 adapter before enabling processing; empty defaults do not process media.
 
-Synthetic merging, scheduling, retry and browser tests pass. Real Home Assistant
-OS, Raspberry Pi 4, Synology storage and Reolink codec/filename semantics remain
-unverified. This alpha is not a production release.
+Automated merging, scheduling, retry and browser tests pass. The owner confirmed
+normal scheduled processing, multi-camera playback, app restart recovery and
+unchanged originals on their live installation. Extended hardware/fault acceptance
+remains incomplete; app metadata remains experimental. See the
+[release notes](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/RELEASE_0.1.0.md).
 
 Initial limits: MP4 H.264/H.265 with matching optional AAC, 256 clips per job,
 sequential processing, and same-filesystem hard-link publication. Immutable output
