@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.8 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.9 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -261,3 +261,12 @@ it does not force 20 fps or re-encode. Codec headers, dimensions, timebase and
 audio compatibility are still checked. After updating/restarting, manually
 reprocess a previously failed day to reset its retry budget, then refresh history.
 If another field differs, the field comparison remains the next diagnostic.
+
+## Dashboard views
+
+Alpha.9 adds latest-per-camera and shared-day galleries plus a local Lovelace card.
+Open **Dashboard setup** in the app to download the JS resource. Follow the
+[dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md)
+for /config/www installation, the HA module resource, card YAML and authenticated
+ingress/session behavior. No static ingress token, public media port or transcoding
+is needed. Actual dashboard deployment on the owner HA remains to be verified.

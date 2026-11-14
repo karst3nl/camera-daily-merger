@@ -9,7 +9,9 @@ from camera_daily_merger.app.web import serve
 from tests.integration.test_web import request
 
 
-def published(store, root, camera, day, token=1, body=b"synthetic export"):
+def published(
+    store, root, camera, day, token=1, body=b"synthetic export", duration=1.5
+):
     relative = f"daily/{camera}/{day}-{token:032x}.mp4"
     path = root / relative
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -21,7 +23,7 @@ def published(store, root, camera, day, token=1, body=b"synthetic export"):
         1,
         output={
             "path": relative,
-            "duration": 1.5,
+            "duration": duration,
             "size": len(body),
             "sha256": hashlib.sha256(body).hexdigest(),
         },
@@ -133,3 +135,34 @@ def test_catalog_access_and_query_validation(tmp_path):
             assert request(url + "/api/videos?" + query)[0] == 400
     with app(tmp_path, peers=set()) as (url, _):
         assert request(url + "/api/videos")[0] == 403
+
+
+def test_dashboard_resource_download_is_local_and_protected(tmp_path):
+    with app(tmp_path) as (url, _):
+        status, body, headers = request(url + "/dashboard-card.js?download=1")
+        assert status == 200
+        assert "camera-daily-merger-card.js" in headers["Content-Disposition"]
+        assert "javascript" in headers["Content-Type"]
+        assert b"supervisor/ingress/session" in body and b"supervisor/api" in body
+        assert b"localStorage" not in body
+    with app(tmp_path, peers=set()) as (url, _):
+        assert request(url + "/dashboard-card.js")[0] == 403
+
+
+def test_media_limit_keeps_metadata_available(tmp_path):
+    settings = Settings(
+        root=tmp_path, cameras={"a": "input"}, timestamp_pattern=r"(?P<start>.+)\.mp4"
+    )
+    store = Store(tmp_path / "jobs.sqlite")
+    with serve(
+        store, settings, host="127.0.0.1", port=0, peers={"127.0.0.1"}
+    ) as server:
+        for _ in range(6):
+            assert server.media_slots.acquire(blocking=False)
+        try:
+            url = f"http://127.0.0.1:{server.server_address[1]}"
+            assert request(url + "/video/a/2026-11-12")[0] == 503
+            assert request(url + "/api/videos")[0] == 200
+        finally:
+            for _ in range(6):
+                server.media_slots.release()

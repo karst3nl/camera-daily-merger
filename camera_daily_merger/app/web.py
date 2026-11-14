@@ -86,7 +86,14 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
             )
             super().end_headers()
 
-        def reply(self, status, body, content_type="application/json"):
+        def reply(
+            self,
+            status,
+            body,
+            content_type="application/json",
+            *,
+            download_filename=None,
+        ):
             data = (
                 json.dumps(body).encode()
                 if content_type == "application/json"
@@ -95,6 +102,10 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(data)))
+            if download_filename:
+                self.send_header(
+                    "Content-Disposition", f'attachment; filename="{download_filename}"'
+                )
             self.end_headers()
             if self.command != "HEAD":
                 self.wfile.write(data)
@@ -117,10 +128,22 @@ def make_handler(store: Store, settings: Settings | None, allowed_peers: set[str
                 "/": ("index.html", "text/html; charset=utf-8"),
                 "/app.js": ("app.js", "text/javascript; charset=utf-8"),
                 "/style.css": ("style.css", "text/css; charset=utf-8"),
+                "/dashboard-card.js": (
+                    "camera-daily-merger-card.js",
+                    "text/javascript; charset=utf-8",
+                ),
             }
             if path in static:
                 name, content_type = static[path]
-                self.reply(200, (STATIC / name).read_bytes(), content_type)
+                self.reply(
+                    200,
+                    (STATIC / name).read_bytes(),
+                    content_type,
+                    download_filename="camera-daily-merger-card.js"
+                    if path == "/dashboard-card.js"
+                    and parse_qs(parsed.query).get("download") == ["1"]
+                    else None,
+                )
             elif path == "/api/status":
                 self.reply(
                     200,

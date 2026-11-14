@@ -65,3 +65,11 @@
   stream configuration matches; preserve source packet timing with stream copy.
 - Added exact 20/1 versus 239/12 and irregular-cadence regressions proving encoded
   packets, decoded frames, timing/order, duration and source hashes are preserved.
+- Dashboard extension, step 1: latest published day per camera and shared-date
+  multi-camera galleries, play/pause controls, missing-export states and automatic
+  refresh that preserves active playback.
+- Added read-only collection API and version-pinned video URLs; six media streams
+  and eight total HTTP workers keep metadata requests available during playback.
+- Alpha.9: local Lovelace card for latest-per-camera and shared-day collections,
+  using authenticated HA ingress sessions with modern/legacy WS support, renewal
+  and same-origin validation. Added in-app resource download/setup and documentation.

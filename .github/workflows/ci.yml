@@ -31,3 +31,24 @@ jobs:
       - run: python tests/integration/check_pipeline.py --image merger:test --compact
       - run: python tests/integration/check_pipeline.py --image merger:test --compact --archived-dst
       - run: python tests/integration/check_pipeline.py --image merger:test --compact --mixed-rate
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: python -m pip install '.[dev,browser]'
+      - run: python -m playwright install --with-deps chromium
+      - run: mkdir -p work
+      - run: |
+          python - <<'PY'
+          import subprocess
+          import sys
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as playwright:
+              executable = playwright.chromium.executable_path
+          for suite in ('check_browser', 'check_gallery_browser', 'check_dashboard_card'):
+              subprocess.run([sys.executable, '-m', 'tests.integration.' + suite, '--chromium', executable], check=True)
+          PY

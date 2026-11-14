@@ -20,3 +20,10 @@ and [operations guide](https://github.com/karst3nl/camera-daily-merger/blob/alph
 Project code is MIT-licensed. Bundled FFmpeg and other libraries retain their own
 license terms; see THIRD_PARTY.md. Develop and test alpha only; main requires
 separate owner approval after real-device acceptance.
+
+Latest-per-camera and shared-day galleries are available in alpha.9, including
+shared player controls and a local Lovelace card. Open **Dashboard setup** to
+download it; see the project's
+[dashboard guide](https://github.com/karst3nl/camera-daily-merger/blob/alpha/docs/DASHBOARD.md)
+for local resource installation and manual card YAML. Current app access policy
+continues to apply; no public video port or stored ingress token is introduced.

@@ -70,3 +70,6 @@
   refresh that preserves active playback.
 - Added read-only collection API and version-pinned video URLs; six media streams
   and eight total HTTP workers keep metadata requests available during playback.
+- Alpha.9: local Lovelace card for latest-per-camera and shared-day collections,
+  using authenticated HA ingress sessions with modern/legacy WS support, renewal
+  and same-origin validation. Added in-app resource download/setup and documentation.

@@ -1,6 +1,7 @@
 """Desktop/mobile multi-camera gallery with real synthetic playback."""
 
 from pathlib import Path
+import argparse
 import subprocess
 import tempfile
 
@@ -13,6 +14,9 @@ from tests.integration.test_catalog import published
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--chromium", default="/usr/bin/chromium")
+    args = parser.parse_args()
     with tempfile.TemporaryDirectory(dir=Path.cwd() / "work") as folder:
         root = Path(folder)
         base = root / "synthetic.mp4"
@@ -40,9 +44,9 @@ def main():
             cameras={"a": "input_a", "b": "input_b", "c": "input_c"},
             timestamp_pattern=r"(?P<start>.+)\.mp4",
         )
-        published(store, root, "a", "2026-11-11", body=body)
-        published(store, root, "a", "2026-11-12", body=body)
-        published(store, root, "b", "2026-11-11", body=body)
+        published(store, root, "a", "2026-11-11", body=body, duration=5.0)
+        published(store, root, "a", "2026-11-12", body=body, duration=5.0)
+        published(store, root, "b", "2026-11-11", body=body, duration=5.0)
         with (
             serve(
                 store, settings, host="127.0.0.1", port=0, peers={"127.0.0.1"}
@@ -50,7 +54,7 @@ def main():
             sync_playwright() as pw,
         ):
             browser = pw.chromium.launch(
-                executable_path="/usr/bin/chromium",
+                executable_path=args.chromium,
                 headless=True,
                 args=["--no-sandbox"],
             )
@@ -79,7 +83,7 @@ def main():
             page.wait_for_function(
                 "() => [...document.querySelectorAll('#gallery-grid video')].every(v=>v.readyState>=2 && !v.paused)"
             )
-            published(store, root, "b", "2026-11-12", body=body)
+            published(store, root, "b", "2026-11-12", body=body, duration=5.0)
             page.evaluate("() => refreshGallery()")
             expect(page.locator("#gallery-message")).to_contain_text(
                 "New exports are ready"
@@ -106,6 +110,13 @@ def main():
             expect(page.locator("#gallery-grid video")).to_have_count(2)
             assert not page.locator("header").is_visible()
             assert not page.locator("#management").is_visible()
+            page.goto(url + "/#view=latest")
+            page.get_by_role("button", name="Dashboard setup", exact=True).click()
+            with page.expect_download() as download:
+                page.get_by_role(
+                    "link", name="Download dashboard card", exact=True
+                ).click()
+            assert download.value.suggested_filename == "camera-daily-merger-card.js"
             assert not errors, errors
             browser.close()
             print(

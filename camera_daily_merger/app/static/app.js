@@ -84,6 +84,7 @@ function renderCollection(data){
   const isDay=galleryView==='day';
   for(const id of ['gallery-date-control','gallery-previous','gallery-next'])el(id).hidden=!isDay;
   el('gallery-day').value=data.day || '';
+  el('gallery-back').hidden=!(isDay && embedded);
   const position=galleryDates.indexOf(data.day);
   el('gallery-previous').disabled=position<0 || position>=galleryDates.length-1;
   el('gallery-next').disabled=position<=0;
@@ -143,3 +144,7 @@ refresh().catch(error=>el('message').textContent=error.message);
 setInterval(()=>{if(!document.hidden && galleryView!=='manage')refreshGallery();},60000);
 
 window.addEventListener('hashchange',()=>{const parameters=new URLSearchParams(location.hash.slice(1));embedded=parameters.get('embed')==='1';document.body.classList.toggle('embedded',embedded);selectView(parameters.get('view') || 'latest',parameters.get('day'),false);});
+
+el('gallery-back').addEventListener('click',()=>selectView('latest'));
+
+el('dashboard-help').addEventListener('click',()=>{const setup=document.querySelector('.dashboard-setup');setup.open=true;setup.scrollIntoView({block:'start',behavior:'smooth'});});

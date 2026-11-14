@@ -569,3 +569,55 @@ source-preservation and compatibility tests still pass.
 Actual Lovelace integration is the next independent step, not yet verified on
 owner HA. Full HA OS/NAS/Pi acceptance remains incomplete despite successful
 owner-reported processing. No merge or push to main.
+
+## Dashboard extension — step 2, local Lovelace card (alpha.9)
+
+Implemented a dependency-free custom card and protected in-app JS download/setup.
+The card uses the authenticated HA frontend WebSocket connection, current scoped
+app ingress commands, and the older supervisor/api contract only when a command
+is unknown. It validates same-origin ingress URLs, sets the standard restricted
+cookie, refreshes visible sessions once a minute/on visibility, and cleans up on
+disconnection or user/connection change. No tokens are stored in YAML/localStorage,
+no runtime external script is used, and the add-on gains no HA/Supervisor API
+permissions or public port. Source protocols checked against current and older
+upstream HA frontend/core and Supervisor session behavior (DASHBOARD.md).
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m tests.integration.check_dashboard_card
+.venv/bin/python -m tests.integration.check_gallery_browser
+.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+.venv/bin/python work/scan.py
+git diff --check
+```
+
+Results: 96 tests passed, 0 failed. Added resource download/access and media-cap
+metadata-availability checks. Mock-HA browser tests cover current and legacy
+sessions, same-origin cookie path/SameSite, real synthetic embedded playback,
+latest/day navigation, valid-session preservation, expired-session reload,
+denied permission without fallback, rejection of external ingress URLs/invalid
+slugs, disconnection and mobile layout. Existing gallery and processing browser
+flows also pass. Initial renewal testing found that assigning the same iframe
+URL did not force a fresh page; recreation now explicitly reloads it. A test
+selector initially included the hidden legacy player and was narrowed to gallery
+players. No CSP relaxation was needed. Screenshots reviewed locally.
+
+Owner-side HA dashboard installation, actual WebSocket permissions/session
+renewal and mobile companion behavior remain NOT RUN / BLOCKED until tested on
+the user's system. Local mock protocol tests are not a claim of real HA device
+acceptance. Full original release gate remains incomplete; main is unchanged.
+
+Final validation also passed: native mixed-rate scheduled container pipeline,
+ARM64 image build/emulated health-restart-shutdown smoke, wheel gallery/card asset
+inspection and local documentation link checks. Native browser suites cover card
+download from the UI. Added a dedicated hosted browser CI job with an explicitly
+installed Playwright Chromium and configurable executable paths, so the new JS
+flows are regression-tested beyond local manual runs. Actual HA dashboard remains
+unverified; the mocked session contract is identified separately above.

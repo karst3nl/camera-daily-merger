@@ -1,6 +1,6 @@
 # Camera Daily Merger — Project Specification
 
-**Specification version:** 1.4
+**Specification version:** 1.5
 **Status:** Alpha development; Phases 0–6 synthetic validation complete, real acceptance pending
 **License:** MIT (see [LICENSE](../LICENSE))  
 **Project:** https://github.com/karst3nl/camera-daily-merger
@@ -20,6 +20,16 @@ Camera Daily Merger is an open-source Home Assistant add-on (Home Assistant App)
 - Preserve chronological order using reliable recording timestamps derived from file naming and/or metadata after the actual camera file layout is verified.
 - Log processing status and errors; avoid replacing a valid output with an incomplete or failed export.
 - Be suitable for a Raspberry Pi 4 running Home Assistant OS, with FFmpeg processing sequentially by default.
+
+### Dashboard browsing
+
+- Show each configured camera's newest published daily export, including its date.
+- Show all available camera exports for one chosen calendar day in a common view.
+- Provide a local HA Lovelace card using authenticated ingress; no permanent
+  session URL, public port or cloud runtime resource is required.
+- Shared play/pause is parallel playback, not wall-clock synchronization: motion
+  gaps are absent and per-camera timelines can have different lengths.
+- Keep browsing read-only and bounded; no server-side re-encoded mosaic is created.
 
 ## 3. Storage design
 

@@ -47,7 +47,9 @@ def main():
             page.locator("#day").fill(str(DAY))
             page.get_by_role("button", name="Show recording").click()
             page.locator("#video").evaluate("e=>{e.muted=true;return e.play();}")
-            page.wait_for_function("document.getElementById('video').readyState >= 2")
+            page.wait_for_function(
+                "() => document.getElementById('video').readyState >= 2"
+            )
             page.screenshot(path="work/browser-desktop.png", full_page=True)
             with page.expect_download() as download:
                 page.get_by_role("link", name="Download MP4").click()

@@ -167,3 +167,19 @@ transcode a mosaic. Play-all is available up to six videos; individual controls
 remain available for larger collections. HTTP workers increase from four to eight,
 with at most six media handlers so two workers remain available for metadata.
 Each media handler retains the 64 KiB streaming buffer and original access gates.
+
+Dashboard extension step 2 supplies a dependency-free local custom Lovelace element.
+It obtains app ingress information and a session through the authenticated HA
+frontend connection. It validates a same-origin ingress path before creating an
+iframe, sets the standard SameSite=Strict ingress cookie (Secure on HTTPS), and
+keeps session values out of YAML/localStorage/logs. Current dedicated WS commands
+have a legacy supervisor/api fallback only for unknown_command; authorization
+failures remain failures. A one-minute visible-page validation/visibility handler
+renews or recreates sessions. Valid sessions preserve the iframe; recreation forces
+reload even when the URL is unchanged. User/connection changes and disconnection
+invalidate local state and release resources. No add-on API privileges are added.
+
+The resource is copied once to HA www by the owner and served locally, avoiding
+internet runtime dependencies. Its embedded view is a read-only video surface,
+not a separate authentication boundary: HA's existing app access policy still
+controls every request. Internal collection/file access gates remain unchanged.
