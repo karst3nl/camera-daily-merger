@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.7 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.8 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the
@@ -242,7 +242,7 @@ Alpha.7 adds comparison lines to failed job history. Upgrade, restart, reprocess
 and refresh history after the worker finishes. Each line identifies a one-based
 chronological clip number versus reference clip 1, a zero-based stream index
 (or layout), the field and the two values. Examples include width/height, codec,
-frame rate, timebase, audio layout and codec-header hash. A mismatch reports up to
+timebase, audio layout and codec-header hash. A mismatch reports up to
 12 fields from the first incompatible clip; absence is shown explicitly.
 
 The message alone does not establish whether the recordings require conversion
@@ -251,3 +251,13 @@ The current exact compatibility rules still reject the mismatch, perform no
 transcoding, publish no failed output and retain any previous current export.
 Share only non-sensitive comparison values when requesting help; no recordings
 or full ffprobe dumps are needed for this diagnostic step.
+
+## Different reported video frame rates
+
+Alpha.8 accepts differences in FFprobe's derived video r_frame_rate when the
+other required stream fields match. An estimate such as 239/12 versus 20/1 alone
+no longer rejects an export. The merger preserves packet timing with -c copy;
+it does not force 20 fps or re-encode. Codec headers, dimensions, timebase and
+audio compatibility are still checked. After updating/restarting, manually
+reprocess a previously failed day to reset its retry budget, then refresh history.
+If another field differs, the field comparison remains the next diagnostic.

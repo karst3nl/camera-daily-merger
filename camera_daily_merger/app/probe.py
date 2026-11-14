@@ -148,6 +148,10 @@ def compatibility_differences(reference: Probe, candidate: Probe) -> list[dict]:
         zip(reference.streams, candidate.streams, strict=True)
     ):
         for field, left, right in zip(FIELDS, expected, actual, strict=True):
+            # FFprobe's guessed base rate is not decoder configuration. VFR
+            # timestamps can differ while encoded packets and headers match.
+            if field == "r_frame_rate" and expected[0] == actual[0] == "video":
+                continue
             if left != right:
                 changes.append(
                     {

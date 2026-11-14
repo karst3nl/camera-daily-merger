@@ -251,3 +251,132 @@ def test_large_diagnostics_do_not_deadlock_process():
         )
         == b"done\n"
     )
+
+
+def packet_timing(path):
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v",
+            "-show_packets",
+            "-show_entries",
+            "packet=pts,dts,duration",
+            "-of",
+            "json",
+            str(path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    return [
+        (int(p["pts"]), int(p["dts"]), int(p["duration"]))
+        for p in json.loads(result.stdout)["packets"]
+    ]
+
+
+def decoded_frames(path):
+    result = subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-i",
+            str(path),
+            "-map",
+            "0:v:0",
+            "-vsync",
+            "0",
+            "-f",
+            "framemd5",
+            "-",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return [
+        line.split(",")[-1].strip()
+        for line in result.stdout.splitlines()
+        if line and not line.startswith("#")
+    ]
+
+
+@pytest.mark.parametrize(
+    "timestamp_expression,duration,expected_rate",
+    [
+        ("N*1200", "1200", "239/12"),
+        ("N*1195+floor(N/5)*5", "1195", None),
+    ],
+)
+def test_stream_copy_preserves_cadence_when_derived_rates_differ(
+    tmp_path, timestamp_expression, duration, expected_rate
+):
+    from camera_daily_merger.app.probe import FIELDS, probe, compatibility_differences
+
+    root = tmp_path / "input"
+    root.mkdir()
+    first = root / f"odd first_{DAY}T10:00:00+01:00.mp4"
+    second = root / f"odd second_{DAY}T12:00:00+01:00.mp4"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc2=size=64x64:rate=20:duration=2",
+            "-c:v",
+            "libx264",
+            "-threads",
+            "1",
+            "-bf",
+            "0",
+            "-video_track_timescale",
+            "23900",
+            str(first),
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-i",
+            str(first),
+            "-c",
+            "copy",
+            "-bsf:v",
+            f"setts=time_base=1/23900:pts={timestamp_expression}:dts={timestamp_expression}:duration={duration}",
+            "-video_track_timescale",
+            "23900",
+            str(second),
+        ],
+        check=True,
+    )
+    with first.open("rb") as left, second.open("rb") as right:
+        a, b = probe(left.fileno()), probe(right.fileno())
+    rate_index = FIELDS.index("r_frame_rate")
+    assert a.streams[0][rate_index] == "20/1"
+    assert a.streams[0][rate_index] != b.streams[0][rate_index]
+    if expected_rate:
+        assert b.streams[0][rate_index] == expected_rate
+    assert compatibility_differences(a, b) == []
+    before = hashes([first, second])
+    result = merger.merge(
+        config(tmp_path), clips(tmp_path), DAY, temporary_directory=str(tmp_path)
+    )
+    output = tmp_path / result.path
+    assert result.duration == pytest.approx(a.duration + b.duration, abs=2 / 23900)
+    assert packets(output) == packets(first) + packets(second)
+    assert decoded_frames(output) == decoded_frames(first) + decoded_frames(second)
+    left_timing, right_timing = packet_timing(first), packet_timing(second)
+    shift = round(a.duration * 23900)
+    assert packet_timing(output) == left_timing + [
+        (pts + shift, dts + shift, span) for pts, dts, span in right_timing
+    ]
+    assert hashes([first, second]) == before

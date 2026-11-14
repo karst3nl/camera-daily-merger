@@ -502,3 +502,43 @@ Native image build and `.venv/bin/python tests/integration/check_pipeline.py
 --image camera-daily-merger:test-amd64 --compact --archived-dst` also passed,
 covering scheduled compatible processing, archived DST isolation, source hashes,
 restart idempotency and graceful shutdown with the extended metadata query.
+
+## Phase 7 owner feedback — inferred frame-rate false rejection (alpha.8)
+
+Owner supplied a comparison where only r_frame_rate differs: 239/12 versus 20/1.
+These are FFprobe guessed video base-rate estimates. Rejecting on this derived
+field alone was unnecessarily strict; metadata evidence alone did not justify
+removing the check until synthetic remux preservation was verified.
+
+Generated H.264 at 20 fps, timebase 1/23900, fixed decoder headers, then made a
+separate synthetic remux with 1200-tick PTS/DTS/packet duration. FFprobe reports
+exactly 239/12; headers and every other compared field match. A second fixture has
+irregular timestamp spacing, which can yield an unrelated high guessed base rate.
+Runtime changes exclude only video r_frame_rate from required equality and use
+the same compatibility policy during output validation. No -r, timing filter,
+transcoding or source editing was added to the application. Fixture-only setts
+preparation does not operate on user recordings.
+
+Commands:
+
+```sh
+.venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/python -m pytest
+.venv/bin/python -m build
+.venv/bin/python -m pip check
+.venv/bin/python work/scan.py
+git diff --check
+.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64 --compact --mixed-rate
+```
+
+Results: 90 tests passed, 0 failed. New real synthetic-media tests compare exact
+encoded packet-hash sequences, decoded frame hashes, per-packet PTS/DTS/durations
+(with only the expected concatenation offset), total duration and source SHA256
+for both uniform 239/12 and irregular-cadence cases. Codec/header/timebase/audio
+and prior incompatibility tests still pass. The rebuilt native image merged the
+mixed-rate day automatically and preserved packet hashes/source hashes, restart
+idempotency and graceful shutdown. The mixed-rate variant is now in hosted CI.
+Actual owner-side export after updating is NOT RUN / BLOCKED pending confirmation;
+no real media was opened here and full device acceptance remains outstanding.

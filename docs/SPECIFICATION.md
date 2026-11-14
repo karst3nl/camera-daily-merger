@@ -1,6 +1,6 @@
 # Camera Daily Merger — Project Specification
 
-**Specification version:** 1.3  
+**Specification version:** 1.4
 **Status:** Alpha development; Phases 0–6 synthetic validation complete, real acceptance pending
 **License:** MIT (see [LICENSE](../LICENSE))  
 **Project:** https://github.com/karst3nl/camera-daily-merger
@@ -46,6 +46,17 @@ The initial installation uses a Synology DS223 NAS with the camera recordings in
 8. Reconcile previously processed days to detect late clips or failed jobs; rebuild safely if the source set changed.
 
 The actual camera filename conventions, date-boundary behavior (including daylight saving transitions), timestamp priority, compatibility of source video/audio streams, browser playback limitations (especially H.265), and exact validation criteria must be specified after inspecting sample files.
+
+### Derived frame-rate policy
+
+FFprobe's video `r_frame_rate` is a guessed base rate, not a decoder-configuration
+invariant. Matching MP4 video streams may therefore be copied with different
+reported base rates when all other required stream fields (including codec
+headers, geometry, timebase and audio layout) match. Input packet timing is
+preserved; the application does not set an output frame rate, duplicate/drop
+frames or transcode to normalize these estimates. Output validation uses the
+same compatibility policy and duration checks. Actual device acceptance remains
+required even after packet/frame/timing-preservation tests pass synthetically.
 
 ## 5. Proposed implementation
 

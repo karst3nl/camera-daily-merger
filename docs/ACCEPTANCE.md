@@ -89,7 +89,8 @@ Initial limits to verify against the real workload:
   exceeds this, safe bounded chunked processing must be implemented before release.
 - MP4 with exactly one matching H.264/H.265 stream and optional matching AAC;
   other containers/stream layouts require a verified future adapter/policy.
-- Stream parameters/extradata must match exactly; no automatic transcoding.
+- Required stream parameters/extradata must match exactly; derived video
+  r_frame_rate alone may differ. No automatic transcoding or cadence normalization.
 - One-hour FFmpeg timeout; sequential jobs only.
 - Same-filesystem hard-link/fsync support required for publication.
 - Retained immutable versions and orphan partials can consume additional NAS space.

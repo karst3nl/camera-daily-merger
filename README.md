@@ -32,7 +32,7 @@ operation remain unverified. This is not a production-ready add-on.
 Project code and documentation use the [MIT license](LICENSE). Third-party
 software retains its own licenses; see [dependency notices](docs/THIRD_PARTY.md).
 
-Current add-on snapshot: **0.1.0-alpha.7**. Install the alpha repository using
+Current add-on snapshot: **0.1.0-alpha.8**. Install the alpha repository using
 `https://github.com/karst3nl/camera-daily-merger#alpha`; see setup for verified
 branch-selector behavior and device-test limitations. Configure sources in the
 Home Assistant Configuration tab; empty defaults do not process media.

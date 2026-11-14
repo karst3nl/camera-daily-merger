@@ -242,3 +242,8 @@ pointer, rather than overwriting the date-only pathname. This preserves unknown
 colliding files and previous successful exports across crashes. Only one version
 is current per camera/date; older/orphan versions remain until an explicitly
 approved future cleanup policy. See ARCHITECTURE.md for tradeoffs.
+
+Phase 7 / alpha.8: classify derived video r_frame_rate as informational after
+synthetic packet/frame/timing-preservation evidence for matching codec headers
+and timebases with different frame-rate estimates. Apply the same comparison at
+input and output validation. All other required stream fields remain strict.

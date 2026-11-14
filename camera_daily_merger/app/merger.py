@@ -148,7 +148,7 @@ def merge(
             result = probe(output_fd, cancel=cancel)
             expected = sum(item.duration for item in probes)
             if (
-                result.streams != probes[0].streams
+                compatibility_differences(probes[0], result)
                 or abs(result.duration - expected) > 0.25 * len(clips) + 0.5
             ):
                 raise MediaError("Output stream/duration validation failed")

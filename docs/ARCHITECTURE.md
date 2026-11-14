@@ -43,7 +43,8 @@ The dry-run is a local administrative CLI and reports relative source paths.
 
 Phase 3 accepts MP4 with exactly one H.264/H.265 video stream and optional AAC
 tracks; stream ordering and codec/profile/level/extradata, geometry, pixel format,
-color metadata, frame rate/timebase and audio layout must match exactly. The
+color metadata, timebase and audio layout must match exactly. The derived video
+`r_frame_rate` estimate is informational rather than an exact-match requirement. The
 policy is deliberately conservative. Other layouts fail without conversion.
 Concat uses -c copy and -auto_convert 0; filenames never enter its manifest,
 only inherited read-only integer descriptors. Inputs are checked before/after
@@ -141,3 +142,11 @@ query without loading manifests or making one DB connection per result. Accepted
 retries clear stale comparisons. Only authenticated job responses expose the
 structured records; the frontend uses textContent. No schema migration or media
 compatibility relaxation is introduced.
+
+Alpha.8 uses the same compatibility comparison for input and validated output.
+Only video r_frame_rate is excluded: codec/extradata/timebase/audio and other
+fields remain strict. No -r or cadence-normalization filter is added to the app's
+FFmpeg command. Synthetic fixture preparation retimes a separate generated copy
+with setts to reproduce 20/1 vs 239/12 and irregular DTS spacing without changing
+encoded headers; setts is never used by the runtime merger. Packet hashes, decoded
+frame hashes and PTS/DTS/durations establish preservation in these regressions.

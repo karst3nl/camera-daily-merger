@@ -61,3 +61,7 @@
 - Alpha.7: incompatible-stream failures identify the first differing chronological
   clip and show bounded field/value comparisons in job history. The conservative
   compatibility policy and no-transcoding behavior remain unchanged.
+- Alpha.8: accept differing derived video r_frame_rate estimates when required
+  stream configuration matches; preserve source packet timing with stream copy.
+- Added exact 20/1 versus 239/12 and irregular-cadence regressions proving encoded
+  packets, decoded frames, timing/order, duration and source hashes are preserved.

@@ -18,7 +18,10 @@ def main():
     parser.add_argument("--image", required=True)
     parser.add_argument("--compact", action="store_true")
     parser.add_argument("--archived-dst", action="store_true")
+    parser.add_argument("--mixed-rate", action="store_true")
     args = parser.parse_args()
+    if args.mixed_rate and not args.compact:
+        parser.error("--mixed-rate requires --compact")
     name = "merger-pipeline-" + uuid.uuid4().hex[:12]
 
     def docker(*command):
@@ -49,16 +52,45 @@ def main():
                 "-f",
                 "lavfi",
                 "-i",
-                "color=red:size=64x64:duration=0.5:rate=10",
+                "color=red:size=64x64:duration=0.5:rate=20"
+                if args.mixed_rate
+                else "color=red:size=64x64:duration=0.5:rate=10",
                 "-c:v",
                 "libx264",
                 "-threads",
                 "1",
+                *(
+                    ["-bf", "0", "-video_track_timescale", "23900"]
+                    if args.mixed_rate
+                    else []
+                ),
                 str(source),
             ],
             check=True,
         )
         digest = hashlib.sha256(source.read_bytes()).hexdigest()
+        second = None
+        second_digest = None
+        if args.mixed_rate:
+            second = source_dir / f"synthetic_00_{day:%Y%m%d}120000.mp4"
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-v",
+                    "error",
+                    "-i",
+                    str(source),
+                    "-c",
+                    "copy",
+                    "-bsf:v",
+                    "setts=time_base=1/23900:pts=N*1200:dts=N*1200:duration=1200",
+                    "-video_track_timescale",
+                    "23900",
+                    str(second),
+                ],
+                check=True,
+            )
+            second_digest = hashlib.sha256(second.read_bytes()).hexdigest()
         archived = None
         if args.archived_dst:
             if not args.compact:
@@ -114,6 +146,31 @@ def main():
             )
             assert (media / output["path"]).exists()
             docker("exec", name, "python", "-m", "app.main", "--healthcheck")
+            if second is not None:
+
+                def packet_hashes(relative):
+                    raw = docker(
+                        "exec",
+                        name,
+                        "ffprobe",
+                        "-v",
+                        "error",
+                        "-select_streams",
+                        "v",
+                        "-show_packets",
+                        "-show_data_hash",
+                        "sha256",
+                        "-of",
+                        "json",
+                        f"/media/{relative}",
+                    ).stdout
+                    return [
+                        packet["data_hash"] for packet in json.loads(raw)["packets"]
+                    ]
+
+                assert packet_hashes(output["path"]) == packet_hashes(
+                    "input/" + source.name
+                ) + packet_hashes("input/" + second.name)
             docker("restart", name)
             time.sleep(1)
             docker("stop", "-t", "5", name)
@@ -125,6 +182,8 @@ def main():
             assert hashlib.sha256(source.read_bytes()).hexdigest() == digest
             if archived is not None:
                 assert hashlib.sha256(archived.read_bytes()).hexdigest() == digest
+            if second is not None:
+                assert hashlib.sha256(second.read_bytes()).hexdigest() == second_digest
             assert (
                 docker("inspect", "-f", "{{.State.ExitCode}}", name).stdout.strip()
                 == "0"
