@@ -200,3 +200,12 @@ viewport; fullscreen targets the wrapper, never the raw video element. CSS
 transforms implement bounded 1–4× digital zoom and pointer-based pan. No canvas,
 extra video element, server transformation, source write or background animation
 loop is used. Original management playback remains separate.
+
+## Browser-local wall layout
+
+A small dependency-free layout controller changes CSS grid columns and shared
+width without rebuilding media elements. Equal grid tracks and rows keep camera
+windows equal. Preferences contain only a validated column choice and a bounded
+size percentage in localStorage; inaccessible/corrupt storage falls back safely.
+ResizeObserver clamps existing zoom/pan when viewport dimensions change; gallery
+teardown disconnects its observer. No backend persistence or media copies added.

@@ -29,3 +29,6 @@ apply and recordings are streamed directly from existing exports.
 
 Alpha.11 adds a compact surveillance wall with adjacent cameras, name/date labels,
 external playback controls and local digital zoom/pan. No new configuration.
+
+Alpha.12 adds graphical **Layout** controls for 1–4 columns (including 2×2) and
+shared equal window sizing. Preferences are saved in the current browser.

@@ -86,3 +86,10 @@
 - External playback, seeking and audio controls leave the video image unobscured.
 - Client-side 1–4× digital zoom, reset, mouse/touch pan and wrapper fullscreen.
 - Preserve native dashboard embedding and original recordings without copying.
+
+## 0.1.0-alpha.12
+
+- Graphical dashboard layout: automatic or 1–4 columns, including four-camera 2×2.
+- Shared window-size control keeps camera tiles equal and preserves playback.
+- Validated browser-local layout preferences, reset and blocked-storage fallback.
+- Clamp zoom/pan during window resizing without reloading video streams.

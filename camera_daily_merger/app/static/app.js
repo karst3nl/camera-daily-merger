@@ -65,7 +65,7 @@ const initial=new URLSearchParams(location.hash.slice(1));
 let embedded=initial.get('embed')==='1';
 document.body.classList.toggle('embedded',embedded);
 function galleryPlayers(){return [...el('gallery-grid').querySelectorAll('video')];}
-function stopGallery(){for(const video of galleryPlayers()){video.pause();video.removeAttribute('src');video.load();}}
+function stopGallery(){for(const video of galleryPlayers()){video.closest('.surveillance-player')?.releaseLayout?.();video.pause();video.removeAttribute('src');video.load();}}
 function galleryQuery(){const query=new URLSearchParams({view:galleryView});if(galleryView==='day' && galleryDay)query.set('day',galleryDay);return query.toString();}
 function selectView(view,day=null,writeHash=true){
   stopGallery();galleryView=['latest','day','manage'].includes(view)?view:'latest';

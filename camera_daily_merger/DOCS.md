@@ -14,7 +14,7 @@ https://github.com/karst3nl/camera-daily-merger#alpha
 ```
 
 Reload the store, select Camera Daily Merger and install the alpha build. Confirm
-version 0.1.0-alpha.11 or newer from alpha. The `#alpha` selector is important:
+version 0.1.0-alpha.12 or newer from alpha. The `#alpha` selector is important:
 without it the repository's default branch is used. Current Supervisor source
 explicitly parses this selector and passes it as Git's clone branch; the actual
 HA store installation flow still requires device acceptance. This corrects the

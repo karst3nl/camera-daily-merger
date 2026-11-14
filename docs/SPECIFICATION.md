@@ -1,6 +1,6 @@
 # Camera Daily Merger — Project Specification
 
-**Specification version:** 1.6
+**Specification version:** 1.7
 **Status:** Alpha development; Phases 0–6 synthetic validation complete, real acceptance pending
 **License:** MIT (see [LICENSE](../LICENSE))  
 **Project:** https://github.com/karst3nl/camera-daily-merger
@@ -34,6 +34,9 @@ Camera Daily Merger is an open-source Home Assistant add-on (Home Assistant App)
   Camera tiles show only camera name and export date as normal metadata.
 - Keep playback controls outside the image, including fullscreen. Provide browser
   digital zoom (1–4×), reset and pointer/touch panning without changing media.
+- Offer automatic or 1–4-column layouts, including 2×2 for four cameras. Resize
+  windows together while keeping equal tile geometry and preserving playback.
+  Remember validated layout preferences locally in the browser.
 
 ## 3. Storage design
 

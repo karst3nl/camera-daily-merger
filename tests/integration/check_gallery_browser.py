@@ -41,7 +41,7 @@ def main():
         store = Store(root / "jobs.sqlite")
         settings = Settings(
             root=root,
-            cameras={"a": "input_a", "b": "input_b", "c": "input_c"},
+            cameras={"a": "input_a", "b": "input_b", "c": "input_c", "d": "input_d"},
             timestamp_pattern=r"(?P<start>.+)\.mp4",
         )
         published(store, root, "a", "2026-11-11", body=body, duration=5.0)
@@ -77,6 +77,15 @@ def main():
                 page.locator('.camera-tile[data-camera="b"] .tile-date')
             ).to_have_text("2026-11-11")
             expect(page.locator("#gallery-grid video")).to_have_count(2)
+            initial_boxes = [
+                tile.bounding_box() for tile in page.locator(".camera-tile").all()
+            ]
+            assert len(initial_boxes) == 4
+            assert (
+                max(b["height"] for b in initial_boxes)
+                - min(b["height"] for b in initial_boxes)
+                < 1
+            )
             assert not media_requests, media_requests
             page.get_by_role("button", name="Play all", exact=True).click()
             expect(page.locator("#gallery-message")).to_have_text("")
@@ -253,10 +262,93 @@ def main():
             )
             expect(frame.locator("#gallery-title")).to_have_text("Latest per camera")
             expect(frame.locator("#gallery-grid video")).to_have_count(2)
+            # Four equal windows, shared resizing and persisted layout preferences.
+            published(store, root, "c", "2026-11-12", body=body, duration=5.0)
+            published(store, root, "d", "2026-11-12", body=body, duration=5.0)
+            page.set_viewport_size({"width": 1280, "height": 1000})
+            page.goto(url)
+            expect(page.locator("#gallery-grid video")).to_have_count(4)
+            page.locator(".layout-settings summary").click()
+            page.get_by_label("Columns", exact=True).select_option("2")
+
+            def equal_windows():
+                boxes = [
+                    tile.bounding_box() for tile in page.locator(".camera-tile").all()
+                ]
+                assert len(boxes) == 4
+                assert (
+                    max(b["width"] for b in boxes) - min(b["width"] for b in boxes) < 1
+                )
+                assert (
+                    max(b["height"] for b in boxes) - min(b["height"] for b in boxes)
+                    < 1
+                )
+                assert boxes[0]["y"] == boxes[1]["y"]
+                assert boxes[2]["y"] == boxes[3]["y"] > boxes[0]["y"]
+                return boxes
+
+            before = equal_windows()
+            page.get_by_role("button", name="Play all", exact=True).click()
+            page.wait_for_function(
+                "() => [...document.querySelectorAll('#gallery-grid video')].every(v=>v.readyState>=2 && !v.paused)"
+            )
+            first_zoom = page.get_by_role("button", name="a: Zoom in", exact=True)
+            first_zoom.click()
+            first_zoom.click()
+            page.locator("#gallery-grid video").first.evaluate(
+                "v=>window.layoutPlayer=v"
+            )
+            page.get_by_role("slider", name="Window size", exact=False).fill("70")
+            page.get_by_role("slider", name="Window size", exact=False).press("Tab")
+            after = equal_windows()
+            expect(
+                page.get_by_role("button", name="a: Reset zoom", exact=True)
+            ).to_have_text("2×")
+            assert after[0]["width"] < before[0]["width"]
+            assert page.evaluate(
+                "window.layoutPlayer===document.querySelector('#gallery-grid video') && !window.layoutPlayer.paused"
+            )
+            page.screenshot(path="work/layout-2x2.png", full_page=True)
+            page.reload()
+            expect(page.locator("#gallery-grid video")).to_have_count(4)
+            expect(page.locator("#layout-columns")).to_have_value("2")
+            expect(page.locator("#layout-size")).to_have_value("70")
+            equal_windows()
+            page.get_by_role("button", name="All cameras by day", exact=True).click()
+            expect(page.locator("#gallery-grid video")).to_have_count(4)
+            equal_windows()
+            page.set_viewport_size({"width": 390, "height": 844})
+            equal_windows()
+            assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+            page.locator(".layout-settings summary").click()
+            page.get_by_label("Columns", exact=True).select_option("4")
+            page.get_by_role("slider", name="Window size", exact=False).fill("50")
+            page.get_by_role("slider", name="Window size", exact=False).press("Tab")
+            assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+            page.get_by_role("button", name="Reset layout", exact=True).click()
+            expect(page.locator("#layout-columns")).to_have_value("auto")
+            expect(page.locator("#layout-size")).to_have_value("100")
+            page.evaluate(
+                "localStorage.setItem('camera-daily-merger.layout.v1',JSON.stringify({columns:'999',size:-10}))"
+            )
+            page.reload()
+            expect(page.locator("#layout-columns")).to_have_value("auto")
+            expect(page.locator("#layout-size")).to_have_value("100")
+            page.add_init_script(
+                "Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError')}})"
+            )
+            page.reload()
+            expect(page.locator("#gallery-grid video")).to_have_count(4)
+            page.locator(".layout-settings summary").click()
+            page.get_by_label("Columns", exact=True).select_option("2")
+            expect(page.locator("#layout-status")).to_contain_text(
+                "storage unavailable"
+            )
+            equal_windows()
             assert not errors, errors
             browser.close()
             print(
-                "PASS latest per camera, shared day, missing camera, play/pause all, non-disruptive refresh, mobile/embedded views, external controls, seeking, audio, fullscreen, zoom and pan"
+                "PASS latest per camera, shared day, missing camera, play/pause all, non-disruptive refresh, mobile/embedded views, external controls, seeking, audio, fullscreen, zoom/pan, equal 2x2 sizing and browser preferences"
             )
 
 

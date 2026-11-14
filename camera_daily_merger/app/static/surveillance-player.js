@@ -28,5 +28,8 @@ function createSurveillancePlayer(video, camera) {
   for(const event of ['pointerup','pointercancel','lostpointercapture'])viewport.addEventListener(event,()=>{drag=null;});
   if(document.fullscreenEnabled)button('Fullscreen','⛶',async()=>{try{if(document.fullscreenElement===shell)await document.exitFullscreen();else await shell.requestFullscreen();}catch{/* Embedded browser may deny fullscreen. */}});
   shell.addEventListener('fullscreenchange',apply);
-  shell.append(viewport,controls);apply();return shell;
+  shell.append(viewport,controls);
+  const resize=new ResizeObserver(apply);resize.observe(viewport);
+  shell.releaseLayout=()=>resize.disconnect();
+  apply();return shell;
 }

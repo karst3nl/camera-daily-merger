@@ -272,3 +272,11 @@ external playback controls and bounded client-side zoom/pan. Test playback, seek
 audio, fullscreen geometry, zoom limits/reset/panning and desktop/mobile layouts
 with synthetic video before committing. Preserve the native dashboard bridge,
 processing UI and all source/storage safety invariants.
+
+## Equal adjustable camera windows (owner requested)
+
+Alpha.12 adds graphical automatic/1–4 column selection and a shared 50–100% width
+control. Four cameras in two columns form 2×2. Preserve equal tile dimensions,
+playback and zoom while resizing; store only validated browser-local preferences.
+Test four synthetic cameras, missing tiles, view changes/reload, mobile layout,
+blocked/corrupt storage and existing pipeline/browser gates before commit/push.

@@ -691,3 +691,41 @@ checks. Pointer panning is implemented for mouse and touch; automated drag testi
 used Chromium mouse events. Zoom magnifies existing pixels and cannot recover
 additional detail. Browser fullscreen depends on host iframe/platform permission.
 Phase 7 acceptance remains open; no main merge or production-readiness claim.
+
+## Adjustable equal camera windows — 0.1.0-alpha.12
+
+Implemented graphical automatic/1–4-column layout selection and shared 50–100%
+window sizing. Four cameras in two columns form 2×2; all tile widths/heights stay
+equal. Layout changes keep existing media elements, playback and zoom. Browser
+preferences contain only validated columns/size; reset and inaccessible storage
+fallback are supported. Resize observers clamp pan and disconnect on teardown.
+
+Exact commands and observed results:
+
+- `.venv/bin/ruff check .`: passed.
+- `.venv/bin/ruff format --check .`: passed.
+- `.venv/bin/python -m pytest`: 97 passed, 0 failed.
+- `.venv/bin/python -m tests.integration.check_gallery_browser --chromium /usr/bin/chromium`:
+  passed existing playback/zoom/fullscreen/native-bridge checks plus four-camera
+  2×2 equal dimensions, equal missing-export tiles, shared resize without media
+  replacement or pause, zoom preservation, reload/day-view preferences, mobile
+  2×2, minimum-size four-column overflow, reset and invalid/blocked storage.
+  The initial new label-based test exposed ambiguous accessible labels; explicit
+  labels fixed this before the successful full browser rerun. Visually reviewed
+  the synthetic 2×2 playback screenshot.
+- `.venv/bin/python -m tests.integration.check_browser --chromium /usr/bin/chromium`:
+  passed management/playback/download/reprocess regressions.
+- `.venv/bin/python -m tests.integration.check_dashboard_card --chromium /usr/bin/chromium`:
+  passed current/legacy authenticated session and dashboard regressions.
+- `.venv/bin/python -m build` and `.venv/bin/python -m pip check`: passed.
+- Native AMD64 add-on image build: passed.
+- `.venv/bin/python tests/integration/check_pipeline.py --image camera-daily-merger:test-amd64 --compact --mixed-rate`:
+  passed automatic merge, restart idempotency, graceful shutdown, source hashes.
+- `.venv/bin/python work/scan.py` and `git diff --check`: passed heuristic privacy
+  and whitespace checks. MIT license unchanged.
+
+No recordings copied or original media changed. Actual HA/Pi/NAS and physical
+mobile-device acceptance: NOT RUN. Preferences apply to this browser/HA origin,
+not automatically to other devices. More cameras produce more rows; the existing
+six-simultaneous-stream limit remains. Phase 7 acceptance remains open; main stays
+unchanged.

@@ -61,3 +61,24 @@ edges. Zoom is local to that player and resets when a view is rebuilt. It does
 not move the physical camera, add detail, copy recordings or transcode media.
 Only actual playback/export errors add diagnostic text to a tile. The date always
 identifies the displayed export, including a retained prior successful export.
+
+## Adjustable layout (alpha.12)
+
+Open **Layout** above the camera wall. Choose **2 columns** for four cameras in a
+2×2 arrangement, or choose automatic, one, three or four columns. All configured
+cameras remain present; additional cameras continue onto further rows. Fixed
+column choices also apply on mobile and inside the Home Assistant dashboard.
+
+Use **Window size** (50–100%) to resize every camera window together. The value
+sets the wall's width relative to the available space; 100% fills that space.
+All tiles keep equal widths and heights, with the same 16:9 video viewport and
+external controls. Videos with a different aspect ratio are letterboxed. Missing
+exports retain equal-sized tiles. Long camera names are shortened visually.
+Layout changes preserve the existing players, playback positions and zoom.
+
+Preferences apply to latest/day and embedded views and are saved for this browser
+on the same Home Assistant origin. A different device/browser has its own settings.
+Only column count and size are stored, never recordings or credentials. If browser
+storage is blocked, changes work for the current page and a status explains that
+they cannot persist. **Reset layout** restores automatic columns and 100% width.
+The six-simultaneous-stream limit is unchanged.
